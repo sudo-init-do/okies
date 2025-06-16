@@ -1,0 +1,29 @@
+node_modules
+/src/config/serviceAccountKey.json
+
+
+# .gitignore
+
+# Node modules
+node_modules/
+
+# Build output
+dist/
+
+# Env config
+.env
+.env.*
+
+# Firebase admin SDK credentials
+serviceAccountKey.json
+
+# Logs
+logs
+*.log
+
+# IDEs
+.vscode/
+.idea/
+
+# System files
+.DS_Store
