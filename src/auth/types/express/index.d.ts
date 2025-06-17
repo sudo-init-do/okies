@@ -1,8 +1,7 @@
-declare namespace Express {
+import { DecodedIdToken } from 'firebase-admin/auth';
+
+declare module 'express' {
   interface Request {
-    user?: {
-      uid: string;
-      phone_number: string;
-    };
+    user?: DecodedIdToken;
   }
 }
