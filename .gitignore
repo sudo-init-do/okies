@@ -27,3 +27,5 @@ logs
 
 # System files
 .DS_Store
+#private file 
+.env

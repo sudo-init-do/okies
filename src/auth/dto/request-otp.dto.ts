@@ -1,3 +1,6 @@
+import { IsEmail } from 'class-validator';
+
 export class RequestOtpDto {
-  phoneNumber: string;
+  @IsEmail()
+  email: string;
 }
