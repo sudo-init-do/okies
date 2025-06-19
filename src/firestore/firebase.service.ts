@@ -15,7 +15,8 @@ import {
   ServiceAccount,
 } from 'firebase-admin/app';
 
-import * as serviceAccount from 'src/config/firebase-service-account.json';
+// Import service account configuration
+import serviceAccount from '../config/firebase-service-account.json';
 
 @Injectable()
 export class FirebaseService {

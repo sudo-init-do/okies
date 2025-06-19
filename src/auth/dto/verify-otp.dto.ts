@@ -1,16 +1,21 @@
 // src/auth/dto/verify-otp.dto.ts
 
-import { IsString, IsNotEmpty, IsEmail, Matches } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  Matches,
+  Length,
+} from 'class-validator';
 
 export class VerifyOtpDto {
   @IsEmail({}, { message: 'Email must be a valid email address' })
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Email is required' })
   email: string;
 
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^\d{4,6}$/, {
-    message: 'OTP must be a 4-6 digit code',
-  })
+  @IsString({ message: 'OTP must be a string' })
+  @IsNotEmpty({ message: 'OTP is required' })
+  @Matches(/^\d+$/, { message: 'OTP must contain only numbers' })
+  @Length(6, 6, { message: 'OTP must be exactly 6 digits' })
   otp: string;
 }

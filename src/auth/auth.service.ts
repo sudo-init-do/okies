@@ -19,19 +19,17 @@ export class AuthService {
     private readonly plunkService: PlunkService,
   ) {}
 
-  /**
-   * Step 1 — Request OTP:
-   * Generate a 6-digit OTP, store it under otp_verification/{email}, and send it via Plunk.
-   */
   async requestOtp(dto: RequestOtpDto) {
     const email = dto.email.toLowerCase();
-
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
 
     try {
       await this.firebaseService.setDocument('otp_verification', email, {
         otp,
-        createdAt: new Date().toISOString(),
+        createdAt: now.toISOString(),
+        expiresAt: expiresAt.toISOString(),
       });
 
       await this.plunkService.sendOtpEmail(email, otp);
@@ -45,25 +43,26 @@ export class AuthService {
     }
   }
 
-  /**
-   * Step 2 — Verify OTP:
-   * Check stored OTP, create Firebase Auth user if not exists, and return a signed JWT.
-   */
   async verifyOtp(dto: VerifyOtpDto) {
     const email = dto.email.toLowerCase();
     const otp = dto.otp;
 
-    const record = await this.firebaseService.getDocument<{ otp: string }>(
-      'otp_verification',
-      email,
-    );
+    const record = await this.firebaseService.getDocument<{
+      otp: string;
+      expiresAt: string;
+    }>('otp_verification', email);
 
     if (!record || record.otp !== otp) {
       throw new UnauthorizedException('Invalid or expired OTP');
     }
 
-    let userRecord: UserRecord;
+    const now = new Date();
+    const expires = new Date(record.expiresAt);
+    if (now > expires) {
+      throw new UnauthorizedException('OTP has expired');
+    }
 
+    let userRecord: UserRecord;
     try {
       userRecord = await getAuth().getUserByEmail(email);
     } catch {
@@ -97,7 +96,16 @@ export class AuthService {
       });
     }
 
-    const token = jwt.sign({ uid, email: safeEmail }, process.env.JWT_SECRET!, {
+    await this.firebaseService.setDocument('otp_verification', email, {});
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new InternalServerErrorException(
+        'JWT_SECRET is not defined in environment variables',
+      );
+    }
+
+    const token = jwt.sign({ uid, email: safeEmail }, jwtSecret, {
       expiresIn: '7d',
     });
 
@@ -107,10 +115,6 @@ export class AuthService {
     };
   }
 
-  /**
-   * Step 3 — Get Authenticated User Profile:
-   * Returns profile stored in Firestore under users/{uid}
-   */
   async getProfile(user: DecodedIdToken | undefined) {
     if (!user) {
       throw new UnauthorizedException('User not authenticated');
