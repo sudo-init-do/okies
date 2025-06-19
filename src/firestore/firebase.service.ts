@@ -1,4 +1,4 @@
-// This service handles all interactions with Firestore using Firebase Admin SDK
+// src/firestore/firebase.service.ts
 
 import { Injectable } from '@nestjs/common';
 import {
@@ -8,25 +8,30 @@ import {
   WithFieldValue,
   DocumentReference,
 } from 'firebase-admin/firestore';
-import { initializeApp, applicationDefault, getApps } from 'firebase-admin/app';
+import {
+  initializeApp,
+  cert,
+  getApps,
+  ServiceAccount,
+} from 'firebase-admin/app';
+
+import * as serviceAccount from 'src/config/firebase-service-account.json';
 
 @Injectable()
 export class FirebaseService {
   private db: Firestore;
 
   constructor() {
-    // ✅ Ensure Firebase is initialized only once in the entire app lifecycle
+    // ✅ Initialize Firebase once using the service account credentials
     if (!getApps().length) {
       initializeApp({
-        credential: applicationDefault(),
+        credential: cert(serviceAccount as ServiceAccount),
       });
     }
 
-    // ✅ Connect to Firestore
     this.db = getFirestore();
   }
 
-  // ✅ Set (create or merge) a document
   async setDocument<T extends DocumentData>(
     collection: string,
     docId: string,
@@ -35,7 +40,6 @@ export class FirebaseService {
     await this.db.collection(collection).doc(docId).set(data, { merge: true });
   }
 
-  // ✅ Get a document by ID
   async getDocument<T extends DocumentData>(
     collection: string,
     docId: string,
@@ -45,7 +49,6 @@ export class FirebaseService {
     return doc.exists ? (doc.data() as T) : null;
   }
 
-  // ✅ Update specific fields of a document
   async updateDocument<T extends DocumentData>(
     collection: string,
     docId: string,
@@ -54,7 +57,6 @@ export class FirebaseService {
     await this.db.collection(collection).doc(docId).update(data);
   }
 
-  // ✅ Get a typed document reference
   getDocumentRef<T = DocumentData>(
     collection: string,
     docId: string,

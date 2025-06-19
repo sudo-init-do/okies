@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { FirebaseService } from './firebase.service';
 
 @Module({
-  // Declare the FirebaseService as a provider so Nest can inject it
+  // Register FirebaseService as a provider so it can be injected
   providers: [FirebaseService],
 
-  // Export the service so other modules (like AuthModule) can use it
+  // Export FirebaseService so it can be used in other modules (e.g., AuthModule, UserModule)
   exports: [FirebaseService],
 })
-export class FirebaseModule {} // This module wraps and shares the FirebaseService
+export class FirebaseModule {}

@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { FirebaseModule } from '../firestore/firebase.module'; // ✅ Import FirebaseModule so we can use FirebaseService
+import { PlunkModule } from 'src/plunk/plunk.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { FirebaseModule } from '../firestore/firebase.module'; // ✅ Import Fir
 
     // ✅ Import FirebaseModule to gain access to FirebaseService
     FirebaseModule,
+    PlunkModule,
   ],
 
   // Registers the controller that handles incoming auth routes (e.g. /auth/login)

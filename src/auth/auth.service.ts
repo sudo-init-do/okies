@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -18,32 +19,41 @@ export class AuthService {
     private readonly plunkService: PlunkService,
   ) {}
 
-  // Step 1: Request OTP — generate, store in Firestore, and send via email
+  /**
+   * Step 1 — Request OTP:
+   * Generate a 6-digit OTP, store it under otp_verification/{email}, and send it via Plunk.
+   */
   async requestOtp(dto: RequestOtpDto) {
-    const { email } = dto;
+    const email = dto.email.toLowerCase();
 
-    // generate a 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // store OTP in Firestore under otp_verification/{email}
-    await this.firebaseService.setDocument('otp_verification', email, {
-      otp,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      await this.firebaseService.setDocument('otp_verification', email, {
+        otp,
+        createdAt: new Date().toISOString(),
+      });
 
-    // send OTP via email using Plunk
-    await this.plunkService.sendOtpEmail(email, otp);
+      await this.plunkService.sendOtpEmail(email, otp);
 
-    return {
-      message: `OTP sent to ${email}`,
-    };
+      return { message: `OTP sent to ${email}` };
+    } catch (err) {
+      console.error('❌ Error in requestOtp:', err);
+      throw new InternalServerErrorException(
+        'Failed to send OTP. Try again later.',
+      );
+    }
   }
 
-  // Step 2: Verify OTP and create user if not exists
+  /**
+   * Step 2 — Verify OTP:
+   * Check stored OTP, create Firebase Auth user if not exists, and return a signed JWT.
+   */
   async verifyOtp(dto: VerifyOtpDto) {
-    const { email, otp } = dto;
+    const email = dto.email.toLowerCase();
+    const otp = dto.otp;
 
-    const record = await this.firebaseService.getDocument(
+    const record = await this.firebaseService.getDocument<{ otp: string }>(
       'otp_verification',
       email,
     );
@@ -53,14 +63,22 @@ export class AuthService {
     }
 
     let userRecord: UserRecord;
+
     try {
       userRecord = await getAuth().getUserByEmail(email);
     } catch {
-      userRecord = await getAuth().createUser({ email });
+      try {
+        userRecord = await getAuth().createUser({ email });
+      } catch (err) {
+        console.error('❌ Error creating Firebase user:', err);
+        throw new InternalServerErrorException(
+          'Failed to create user account.',
+        );
+      }
     }
 
-    const uid: string = userRecord.uid;
-    const safeEmail: string = userRecord.email || '';
+    const uid = userRecord.uid;
+    const safeEmail = userRecord.email || email;
 
     const existing = await this.firebaseService.getDocument<UserProfile>(
       'users',
@@ -89,7 +107,10 @@ export class AuthService {
     };
   }
 
-  // Step 3: Fetch user profile using UID from auth token
+  /**
+   * Step 3 — Get Authenticated User Profile:
+   * Returns profile stored in Firestore under users/{uid}
+   */
   async getProfile(user: DecodedIdToken | undefined) {
     if (!user) {
       throw new UnauthorizedException('User not authenticated');
