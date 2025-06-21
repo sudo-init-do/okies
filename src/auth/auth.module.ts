@@ -1,27 +1,24 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { FirebaseModule } from '../firestore/firebase.module'; // ✅ Import FirebaseModule so we can use FirebaseService
+import { FirebaseModule } from '../firestore/firebase.module';
 import { PlunkModule } from 'src/plunk/plunk.module';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
-    // Registers the JWT module with secret and expiry settings
+    PassportModule, // Required for AuthGuard('jwt')
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '7d' },
     }),
-
-    // ✅ Import FirebaseModule to gain access to FirebaseService
     FirebaseModule,
     PlunkModule,
   ],
-
-  // Registers the controller that handles incoming auth routes (e.g. /auth/login)
   controllers: [AuthController],
-
-  // Registers AuthService so it can be injected anywhere in this module
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy], // Register strategy
+  exports: [AuthService, JwtModule], // Export if needed by other modules
 })
 export class AuthModule {}

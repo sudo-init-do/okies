@@ -19,6 +19,10 @@ export class AuthService {
     private readonly plunkService: PlunkService,
   ) {}
 
+  /**
+   * Step 1 — Request OTP:
+   * Generates a 6-digit OTP, stores it in Firestore, and sends it via Plunk.
+   */
   async requestOtp(dto: RequestOtpDto) {
     const email = dto.email.toLowerCase();
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -43,6 +47,10 @@ export class AuthService {
     }
   }
 
+  /**
+   * Step 2 — Verify OTP:
+   * Validates OTP and issues JWT. Creates Firebase Auth user and Firestore user record if needed.
+   */
   async verifyOtp(dto: VerifyOtpDto) {
     const email = dto.email.toLowerCase();
     const otp = dto.otp;
@@ -96,6 +104,7 @@ export class AuthService {
       });
     }
 
+    // ✅ Clean up the OTP after verification
     await this.firebaseService.setDocument('otp_verification', email, {});
 
     const jwtSecret = process.env.JWT_SECRET;
@@ -115,6 +124,9 @@ export class AuthService {
     };
   }
 
+  /**
+   * Step 3 — Get current authenticated user profile.
+   */
   async getProfile(user: DecodedIdToken | undefined) {
     if (!user) {
       throw new UnauthorizedException('User not authenticated');

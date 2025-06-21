@@ -1,21 +1,24 @@
-import { Controller, Get, Put, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, UseGuards, Req } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UpdateProfileDto } from 'src/user/update-profile.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
-import { Request } from 'express';
+import { UpdateUserDto } from 'src/user/update-user.dto';
+import { AuthGuard } from '@nestjs/passport'; // Correct import
+import { DecodedIdToken } from 'firebase-admin/auth';
 
 @Controller('user')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard('jwt')) // Specify JWT strategy
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('me')
-  getProfile(@Req() req: Request) {
+  getCurrentUser(@Req() req: { user: DecodedIdToken }) {
     return this.userService.getProfile(req.user);
   }
 
-  @Put('me')
-  updateProfile(@Req() req: Request, @Body() dto: UpdateProfileDto) {
+  @Patch('update')
+  updateProfile(
+    @Req() req: { user: DecodedIdToken },
+    @Body() dto: UpdateUserDto,
+  ) {
     return this.userService.updateProfile(req.user, dto);
   }
 }
