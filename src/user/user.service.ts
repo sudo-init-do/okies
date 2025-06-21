@@ -43,9 +43,14 @@ export class UserService {
       throw new NotFoundException('User profile not found');
     }
 
+    // Remove undefined fields before updating
+    const cleanDto = Object.fromEntries(
+      Object.entries(dto).filter(([, value]) => value !== undefined),
+    );
+
     const updated: UserProfile = {
       ...profile,
-      ...dto,
+      ...cleanDto,
       updatedAt: new Date().toISOString(),
     };
 
