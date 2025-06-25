@@ -7,6 +7,8 @@ import {
   Query,
   UseGuards,
   Req,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PostService } from './post.service';
@@ -17,7 +19,7 @@ import { DecodedIdToken } from 'firebase-admin/auth';
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
-  // (Bots will call this too)
+  /** Create a post (bots & real users) */
   @UseGuards(AuthGuard('jwt'))
   @Post()
   async create(
@@ -25,14 +27,40 @@ export class PostController {
     @Body() body: Omit<CreatePostDto, 'uid'>,
   ) {
     const dto: CreatePostDto = { uid: req.user.uid, ...body };
-    const id = await this.postService.createPost(dto);
-    return { message: 'Post created', postId: id };
+    const postId = await this.postService.createPost(dto);
+    return { message: 'Post created', postId };
   }
 
-  // Public feed
+  /** Public feed (paginated) */
   @Get('feed')
-  async feed(@Query('limit') limit = '20', @Query('cursor') cursor?: string) {
-    const posts = await this.postService.getFeed(Number(limit), cursor);
-    return { posts };
+  async feed(
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('cursor') cursor?: string,
+  ): Promise<{
+    posts: Array<{ id: string } & Record<string, any>>;
+    nextCursor: string | null;
+  }> {
+    const rawPosts = await this.postService.getFeed(limit, cursor);
+
+    type RawPost = {
+      id?: string;
+      _id?: string;
+      uid?: string;
+      [key: string]: any;
+    };
+
+    const posts: Array<{ id: string } & Record<string, any>> = (
+      rawPosts as RawPost[]
+    ).map((post) => ({
+      id: post.id ?? post._id ?? post.uid ?? '', // adjust as needed based on your Post model
+      ...post,
+    }));
+
+    // last post ID becomes nextCursor
+    const nextCursor: string | null = posts.length
+      ? posts[posts.length - 1].id
+      : null;
+
+    return { posts, nextCursor };
   }
 }
