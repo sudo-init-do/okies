@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { MediaModule } from './media/media.module';
 import { CloudflareModule } from './cloudflare/cloudflare.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -18,6 +19,7 @@ import { PlunkModule } from './plunk/plunk.module';
     UserModule,
     PostModule,
     InteractionModule,
+    MediaModule,
     EarningsModule,
     PlunkModule,
   ],
