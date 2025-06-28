@@ -22,6 +22,7 @@ import { PlunkModule } from './plunk/plunk.module';
     MediaModule,
     EarningsModule,
     PlunkModule,
+    InteractionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

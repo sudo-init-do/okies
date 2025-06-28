@@ -1,4 +1,3 @@
-// src/post/post.controller.ts
 import {
   Controller,
   Get,
@@ -19,7 +18,7 @@ import { DecodedIdToken } from 'firebase-admin/auth';
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
-  /** Create a post (bots & real users) */
+  /** Create a post (for real users & bots) */
   @UseGuards(AuthGuard('jwt'))
   @Post()
   async create(
@@ -31,7 +30,7 @@ export class PostController {
     return { message: 'Post created', postId };
   }
 
-  /** Public feed (paginated) */
+  /** Public feed with pagination */
   @Get('feed')
   async feed(
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
@@ -52,11 +51,10 @@ export class PostController {
     const posts: Array<{ id: string } & Record<string, any>> = (
       rawPosts as RawPost[]
     ).map((post) => ({
-      id: post.id ?? post._id ?? post.uid ?? '', // adjust as needed based on your Post model
+      id: post.id ?? post._id ?? post.uid ?? '',
       ...post,
     }));
 
-    // last post ID becomes nextCursor
     const nextCursor: string | null = posts.length
       ? posts[posts.length - 1].id
       : null;

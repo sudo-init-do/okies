@@ -20,6 +20,6 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "typeRoots": ["./types", "./node_modules/@types"],
-    "types": ["node"]
+    "types": ["node", "jest"]
   }
 }

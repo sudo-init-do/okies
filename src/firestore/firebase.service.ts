@@ -1,9 +1,8 @@
-// src/firestore/firebase.service.ts
 import { Injectable } from '@nestjs/common';
 import {
   getFirestore,
-  DocumentData,
   Firestore,
+  DocumentData,
   WithFieldValue,
   DocumentReference,
 } from 'firebase-admin/firestore';
@@ -13,25 +12,29 @@ import {
   getApps,
   ServiceAccount,
 } from 'firebase-admin/app';
-
-// Adjust the import path to your JSON location
 import serviceAccount from '../config/firebase-service-account.json';
 
 @Injectable()
 export class FirebaseService {
-  private db: Firestore;
+  public db: Firestore;
 
   constructor() {
-    // Initialize Admin SDK once
+    /* Initialize Admin SDK only once */
     if (!getApps().length) {
-      initializeApp({
-        credential: cert(serviceAccount as ServiceAccount),
-      });
+      initializeApp({ credential: cert(serviceAccount as ServiceAccount) });
     }
-    this.db = getFirestore();
+
+    const db = getFirestore();
+    /* ignoreUndefinedProperties → prevents Firestore “undefined” errors */
+    try {
+      db.settings({ ignoreUndefinedProperties: true });
+    } catch {
+      /* settings() was already called – safe to ignore */
+    }
+    this.db = db;
   }
 
-  /* ---------- Basic CRUD helpers ---------- */
+  /* ───────────── Basic CRUD ───────────── */
 
   async setDocument<T extends DocumentData>(
     collection: string,
@@ -45,16 +48,17 @@ export class FirebaseService {
     collection: string,
     data: WithFieldValue<T>,
   ): Promise<string> {
-    const docRef = await this.db.collection(collection).add(data);
-    return docRef.id; // returns generated doc ID
+    const ref = await this.db.collection(collection).add(data);
+    return ref.id;
   }
 
   async getDocument<T extends DocumentData>(
     collection: string,
     docId: string,
   ): Promise<T | null> {
-    const doc = await this.db.collection(collection).doc(docId).get();
-    return doc.exists ? (doc.data() as T) : null;
+    if (!docId?.trim()) return null; // ⬅ guard against empty ID
+    const snap = await this.db.collection(collection).doc(docId).get();
+    return snap.exists ? (snap.data() as T) : null;
   }
 
   async updateDocument<T extends DocumentData>(
@@ -72,7 +76,36 @@ export class FirebaseService {
     return this.db.collection(collection).doc(docId) as DocumentReference<T>;
   }
 
-  /* ---------- New query helper for media listing ---------- */
+  /* ───────────── Helpers for sub‑collections ───────────── */
+
+  async setSubDocument<T extends DocumentData>(
+    collection: string,
+    docId: string,
+    subcollection: string,
+    subId: string,
+    data: WithFieldValue<T>,
+  ): Promise<void> {
+    await this.db
+      .collection(collection)
+      .doc(docId)
+      .collection(subcollection)
+      .doc(subId)
+      .set(data, { merge: true });
+  }
+
+  async deleteSubDocument(
+    collection: string,
+    docId: string,
+    subcollection: string,
+    subId: string,
+  ): Promise<void> {
+    await this.db
+      .collection(collection)
+      .doc(docId)
+      .collection(subcollection)
+      .doc(subId)
+      .delete();
+  }
 
   async queryCollectionByField<T extends DocumentData>(
     collection: string,
