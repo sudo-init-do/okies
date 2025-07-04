@@ -21,6 +21,7 @@ import { SendGiftDto } from './dto/send-gift.dto';
 export class InteractionController {
   constructor(private readonly interactionService: InteractionService) {}
 
+  /* ───── Like ───── */
   @Post('like')
   async like(@Req() req: AuthenticatedRequest, @Body('postId') postId: string) {
     if (!req.user?.uid) {
@@ -30,6 +31,19 @@ export class InteractionController {
     return { message: 'Post liked' };
   }
 
+  @Post('unlike')
+  async unlike(
+    @Req() req: AuthenticatedRequest,
+    @Body('postId') postId: string,
+  ) {
+    if (!req.user?.uid) {
+      throw new Error('User UID is missing from request');
+    }
+    await this.interactionService.unlikePost(postId, req.user.uid);
+    return { message: 'Post unliked' };
+  }
+
+  /* ───── Comment ───── */
   @Post('comment')
   async comment(
     @Req() req: AuthenticatedRequest,
@@ -47,6 +61,7 @@ export class InteractionController {
     return { message: 'Comment added', commentId };
   }
 
+  /* ───── Gift ───── */
   @Post('gift')
   async gift(@Req() req: AuthenticatedRequest, @Body() dto: SendGiftDto) {
     if (!req.user?.uid) {
@@ -61,6 +76,7 @@ export class InteractionController {
     return { message: 'Gift sent', giftId };
   }
 
+  /* ───── List Comments (paginated) ───── */
   @Get('comments/:postId')
   async getComments(
     @Param('postId') postId: string,
@@ -76,6 +92,7 @@ export class InteractionController {
     );
   }
 
+  /* ───── Gift Leaderboard for a Post ───── */
   @Get('gift-leaderboard/:postId')
   async giftLeaderboard(@Param('postId') postId: string) {
     return {
@@ -83,6 +100,7 @@ export class InteractionController {
     };
   }
 
+  /* ───── Current User Earnings ───── */
   @Get('earnings')
   async earnings(@Req() req: AuthenticatedRequest) {
     if (!req.user?.uid) {
