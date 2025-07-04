@@ -39,11 +39,3 @@ npm install
 Oyeyemi Obaloluwa Oyeyemi
 GitHub: @DevObaloluwa
 Twitter/X: @SecureByOba_
-
-
-
-Let me know if you want me to:
-
-- Add badges (build, license, etc.)  
-- Include deployment steps (Firebase/Render)  
-- Or generate this directly into a file for GitHub push.
