@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { WithdrawalsController } from './withdrawals/withdrawals.controller';
 import { PostModule } from './post/post.module';
 import { InteractionModule } from './interaction/interaction.module';
 import { EarningsModule } from './earnings/earnings.module';
@@ -27,7 +28,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     EarningsModule,
     PlunkModule,
   ],
-  controllers: [AppController, AdminController],
+  controllers: [AppController, AdminController, WithdrawalsController],
   providers: [
     AppService,
     {
