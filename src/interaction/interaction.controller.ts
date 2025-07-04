@@ -1,4 +1,3 @@
-// src/interaction/interaction.controller.ts
 import {
   Controller,
   Post,
@@ -11,33 +10,34 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard } from 'src/auth/auth.guard';
 import { InteractionService } from './interaction.service';
-import { DecodedIdToken } from 'firebase-admin/auth';
+import { AuthenticatedRequest } from 'src/auth/types/authenticated-request.type';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { SendGiftDto } from './dto/send-gift.dto';
 
 @Controller('interact')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard)
 export class InteractionController {
   constructor(private readonly interactionService: InteractionService) {}
 
-  /* ───── Like ───── */
   @Post('like')
-  async like(
-    @Req() req: { user: DecodedIdToken },
-    @Body('postId') postId: string,
-  ) {
+  async like(@Req() req: AuthenticatedRequest, @Body('postId') postId: string) {
+    if (!req.user?.uid) {
+      throw new Error('User UID is missing from request');
+    }
     await this.interactionService.likePost(postId, req.user.uid);
     return { message: 'Post liked' };
   }
 
-  /* ───── Comment ───── */
   @Post('comment')
   async comment(
-    @Req() req: { user: DecodedIdToken },
+    @Req() req: AuthenticatedRequest,
     @Body() dto: CreateCommentDto,
   ) {
+    if (!req.user?.uid) {
+      throw new Error('User UID is missing from request');
+    }
     const commentId = await this.interactionService.commentOnPost(
       dto.postId,
       req.user.uid,
@@ -47,9 +47,11 @@ export class InteractionController {
     return { message: 'Comment added', commentId };
   }
 
-  /* ───── Gift ───── */
   @Post('gift')
-  async gift(@Req() req: { user: DecodedIdToken }, @Body() dto: SendGiftDto) {
+  async gift(@Req() req: AuthenticatedRequest, @Body() dto: SendGiftDto) {
+    if (!req.user?.uid) {
+      throw new Error('User UID is missing from request');
+    }
     const giftId = await this.interactionService.sendGift(
       dto.postId,
       req.user.uid,
@@ -59,7 +61,6 @@ export class InteractionController {
     return { message: 'Gift sent', giftId };
   }
 
-  /* ───── List Comments (paginated) ───── */
   @Get('comments/:postId')
   async getComments(
     @Param('postId') postId: string,
@@ -75,7 +76,6 @@ export class InteractionController {
     );
   }
 
-  /* ───── Gift Leaderboard for a Post ───── */
   @Get('gift-leaderboard/:postId')
   async giftLeaderboard(@Param('postId') postId: string) {
     return {
@@ -83,10 +83,11 @@ export class InteractionController {
     };
   }
 
-  /* ───── Current User Earnings ───── */
   @Get('earnings')
-  async earnings(@Req() req: { user: DecodedIdToken }) {
-    // uses uid from the verified JWT
+  async earnings(@Req() req: AuthenticatedRequest) {
+    if (!req.user?.uid) {
+      throw new Error('User UID is missing from request');
+    }
     return this.interactionService.getUserEarnings(req.user.uid);
   }
 }

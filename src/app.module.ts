@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
-import { MediaModule } from './media/media.module';
-import { CloudflareModule } from './cloudflare/cloudflare.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { APP_GUARD } from '@nestjs/core';
+
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
@@ -10,6 +8,12 @@ import { InteractionModule } from './interaction/interaction.module';
 import { EarningsModule } from './earnings/earnings.module';
 import { FirebaseModule } from './firestore/firebase.module';
 import { PlunkModule } from './plunk/plunk.module';
+import { MediaModule } from './media/media.module';
+import { CloudflareModule } from './cloudflare/cloudflare.module';
+import { AdminController } from './admin/admin.controller';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -22,9 +26,14 @@ import { PlunkModule } from './plunk/plunk.module';
     MediaModule,
     EarningsModule,
     PlunkModule,
-    InteractionModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, AdminController],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule {}

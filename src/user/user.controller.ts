@@ -11,6 +11,7 @@ import { UserService } from './user.service';
 import { UpdateUserDto } from 'src/user/update-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { DecodedIdToken } from 'firebase-admin/auth';
+import { AuthenticatedRequest } from 'src/auth/types/authenticated-request.type';
 
 @Controller('user')
 @UseGuards(AuthGuard('jwt'))
@@ -19,16 +20,13 @@ export class UserController {
 
   @Get('me')
   @HttpCode(200)
-  getCurrentUser(@Req() req: { user: DecodedIdToken }) {
-    return this.userService.getProfile(req.user);
+  getCurrentUser(@Req() req: AuthenticatedRequest) {
+    return this.userService.getProfile(req.user as DecodedIdToken);
   }
 
   @Patch('update')
   @HttpCode(200)
-  updateProfile(
-    @Req() req: { user: DecodedIdToken },
-    @Body() dto: UpdateUserDto,
-  ) {
-    return this.userService.updateProfile(req.user, dto);
+  updateProfile(@Req() req: AuthenticatedRequest, @Body() dto: UpdateUserDto) {
+    return this.userService.updateProfile(req.user as DecodedIdToken, dto);
   }
 }

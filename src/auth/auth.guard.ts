@@ -1,4 +1,3 @@
-// src/common/guards/auth.guard.ts
 import {
   Injectable,
   CanActivate,
@@ -7,12 +6,23 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
+
 import { DecodedIdToken } from 'firebase-admin/auth';
+
+interface CustomDecodedToken extends DecodedIdToken {
+  role?: 'admin' | 'user';
+}
+
+interface AuthenticatedRequest {
+  user?: CustomDecodedToken;
+}
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest<Request>();
+    const req = context
+      .switchToHttp()
+      .getRequest<Request & AuthenticatedRequest>();
     const authHeader = req.headers.authorization;
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -22,20 +32,14 @@ export class AuthGuard implements CanActivate {
     }
 
     const token = authHeader.split(' ')[1];
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret) {
+      throw new UnauthorizedException('JWT secret not set');
+    }
 
     try {
-      if (!process.env.JWT_SECRET) {
-        throw new UnauthorizedException('JWT secret is not defined');
-      }
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET,
-      ) as unknown as DecodedIdToken;
-
-      if (!decoded?.uid) {
-        throw new UnauthorizedException('Invalid token payload');
-      }
-
+      const decoded = jwt.verify(token, secret) as CustomDecodedToken;
       req.user = decoded;
       return true;
     } catch {
