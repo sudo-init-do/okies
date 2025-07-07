@@ -1,12 +1,12 @@
 import {
   Controller,
+  UseGuards,
   Post,
   Get,
+  Param,
   Body,
   Req,
-  Param,
   Query,
-  UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
@@ -15,70 +15,63 @@ import { InteractionService } from './interaction.service';
 import { AuthenticatedRequest } from 'src/auth/types/authenticated-request.type';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { SendGiftDto } from './dto/send-gift.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 
-@Controller('interact')
+@Controller('interactions')
 @UseGuards(AuthGuard)
-export class InteractionController {
+export class InteractionController {   // ✅ Make sure `export` is here
   constructor(private readonly interactionService: InteractionService) {}
 
-  /* ───── Like ───── */
-  @Post('like')
-  async like(@Req() req: AuthenticatedRequest, @Body('postId') postId: string) {
-    if (!req.user?.uid) {
-      throw new Error('User UID is missing from request');
-    }
-    await this.interactionService.likePost(postId, req.user.uid);
+  @Post(':postId/like')
+  async likePost(
+    @Param('postId') postId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    await this.interactionService.likePost(postId, req.user!.uid);
     return { message: 'Post liked' };
   }
 
-  @Post('unlike')
-  async unlike(
+  @Post(':postId/unlike')
+  async unlikePost(
+    @Param('postId') postId: string,
     @Req() req: AuthenticatedRequest,
-    @Body('postId') postId: string,
   ) {
-    if (!req.user?.uid) {
-      throw new Error('User UID is missing from request');
-    }
-    await this.interactionService.unlikePost(postId, req.user.uid);
+    await this.interactionService.unlikePost(postId, req.user!.uid);
     return { message: 'Post unliked' };
   }
 
-  /* ───── Comment ───── */
-  @Post('comment')
-  async comment(
-    @Req() req: AuthenticatedRequest,
+  @Post(':postId/comment')
+  async commentOnPost(
+    @Param('postId') postId: string,
     @Body() dto: CreateCommentDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    if (!req.user?.uid) {
-      throw new Error('User UID is missing from request');
-    }
     const commentId = await this.interactionService.commentOnPost(
-      dto.postId,
-      req.user.uid,
+      postId,
+      req.user!.uid,
       dto.text,
-      dto.parentId ?? undefined,
+      dto.parentId,
     );
     return { message: 'Comment added', commentId };
   }
 
-  /* ───── Gift ───── */
-  @Post('gift')
-  async gift(@Req() req: AuthenticatedRequest, @Body() dto: SendGiftDto) {
-    if (!req.user?.uid) {
-      throw new Error('User UID is missing from request');
-    }
+  @Post(':postId/gift')
+  async giftPost(
+    @Param('postId') postId: string,
+    @Body() dto: SendGiftDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
     const giftId = await this.interactionService.sendGift(
-      dto.postId,
-      req.user.uid,
+      postId,
+      req.user!.uid,
       dto.giftType,
       dto.amount,
     );
     return { message: 'Gift sent', giftId };
   }
 
-  /* ───── List Comments (paginated) ───── */
-  @Get('comments/:postId')
-  async getComments(
+  @Get(':postId/comments')
+  async listComments(
     @Param('postId') postId: string,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('cursor') cursor?: string,
@@ -92,20 +85,16 @@ export class InteractionController {
     );
   }
 
-  /* ───── Gift Leaderboard for a Post ───── */
-  @Get('gift-leaderboard/:postId')
+  @Public()
+  @Get(':postId/gift-leaderboard')
   async giftLeaderboard(@Param('postId') postId: string) {
     return {
       leaderboard: await this.interactionService.getGiftLeaderboard(postId),
     };
   }
 
-  /* ───── Current User Earnings ───── */
   @Get('earnings')
   async earnings(@Req() req: AuthenticatedRequest) {
-    if (!req.user?.uid) {
-      throw new Error('User UID is missing from request');
-    }
-    return this.interactionService.getUserEarnings(req.user.uid);
+    return this.interactionService.getUserEarnings(req.user!.uid);
   }
 }

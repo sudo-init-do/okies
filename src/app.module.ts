@@ -1,5 +1,5 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
 
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
@@ -10,10 +10,9 @@ import { FirebaseModule } from './firestore/firebase.module';
 import { PlunkModule } from './plunk/plunk.module';
 import { MediaModule } from './media/media.module';
 import { CloudflareModule } from './cloudflare/cloudflare.module';
-import { AdminController } from './admin/admin.controller';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -27,13 +26,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     EarningsModule,
     PlunkModule,
   ],
-  controllers: [AppController, AdminController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
-  ],
+  controllers: [AppController],      
+  providers: [AppService],      
 })
 export class AppModule {}
