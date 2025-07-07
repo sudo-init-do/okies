@@ -2,6 +2,7 @@
 import { Module } from '@nestjs/common';
 
 import { AuthModule } from './auth/auth.module';
+import { AdminModule } from './admin/admin.module';
 import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { InteractionModule } from './interaction/interaction.module';
@@ -25,6 +26,7 @@ import { AppService } from './app.service';
     MediaModule,
     EarningsModule,
     PlunkModule,
+    AdminModule,
   ],
   controllers: [AppController],      
   providers: [AppService],      
