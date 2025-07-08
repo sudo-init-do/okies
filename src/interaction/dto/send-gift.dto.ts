@@ -1,19 +1,12 @@
-// src/interaction/dto/send-gift.dto.ts
 import { IsInt, Min, IsString, IsIn } from 'class-validator';
+import { GIFT_CATALOG } from '../gift-types.const';
 
-/**
- * DTO for gifting a post.
- * - giftType: must be one of the supported catalog keys
- * - amount  : how many units (min 1)
- */
 export class SendGiftDto {
   @IsString()
-  @IsIn(['rose', 'diamond', 'gold'], {
-    message: 'giftType is invalid',
-  })
-  giftType: string;
+  @IsIn(Object.keys(GIFT_CATALOG), { message: 'giftType is invalid' })
+  giftType!: keyof typeof GIFT_CATALOG;
 
-  @IsInt({ message: 'amount must be an integer' })
-  @Min(1, { message: 'amount must be at least 1' })
-  amount: number;
+  @IsInt()
+  @Min(1)
+  amount!: number; // units of the gift
 }

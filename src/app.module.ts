@@ -8,6 +8,7 @@ import { PostModule } from './post/post.module';
 import { InteractionModule } from './interaction/interaction.module';
 import { EarningsModule } from './earnings/earnings.module';
 import { FirebaseModule } from './firestore/firebase.module';
+import { WalletModule } from './wallet/wallet.module';
 import { PlunkModule } from './plunk/plunk.module';
 import { MediaModule } from './media/media.module';
 import { CloudflareModule } from './cloudflare/cloudflare.module';
@@ -27,6 +28,7 @@ import { AppService } from './app.service';
     EarningsModule,
     PlunkModule,
     AdminModule,
+    WalletModule,
   ],
   controllers: [AppController],      
   providers: [AppService],      
