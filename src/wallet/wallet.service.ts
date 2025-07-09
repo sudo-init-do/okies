@@ -7,45 +7,74 @@ import {
 import { FirebaseService } from 'src/firestore/firebase.service';
 import { UserProfile } from 'src/firestore/types/user-profile.type';
 import { WithdrawDto } from './dto/withdraw.dto';
+import { FieldValue } from 'firebase-admin/firestore';
+
+const COIN_RATE = 10;           // ₦10  → 1 coin  (₦1000 → 100 coins)
 
 @Injectable()
 export class WalletService {
   constructor(private readonly firebase: FirebaseService) {}
 
-  /* ── current balance ── */
+  /* ─────────── Current balance ─────────── */
   async getBalance(uid: string) {
     const profile = await this.firebase.getDocument<UserProfile>('users', uid);
     if (!profile) throw new NotFoundException('User not found');
     return { coins: profile.coins ?? 0 };
   }
 
-  /* ── request withdrawal ── */
+  /* ─────────── Withdraw ─────────── */
   async requestWithdrawal(uid: string, dto: WithdrawDto) {
     const profile = await this.firebase.getDocument<UserProfile>('users', uid);
     if (!profile) throw new NotFoundException('User not found');
 
-    const currentCoins = profile.coins ?? 0;           // ✅ safe default
+    const currentCoins = profile.coins ?? 0;
     if (currentCoins < dto.amount)
       throw new BadRequestException('Insufficient balance');
 
-    // deduct coins atomically
-    await this.firebase.updateDocument('users', uid, {
-      coins: currentCoins - dto.amount,
-    });
+    /* atomic coin-deduction + withdrawal record in a tx */
+    await this.firebase.db.runTransaction(async (tx) => {
+      const userRef = this.firebase.db.collection('users').doc(uid);
 
-    // store withdrawal request
-    await this.firebase.db.collection('withdrawals').add({
-      uid,
-      amount: dto.amount,
-      destination: dto.destination,
-      status: 'pending',
-      requestedAt: new Date().toISOString(),
+      tx.update(userRef, {
+        coins: FieldValue.increment(-dto.amount),
+      });
+
+      tx.set(
+        this.firebase.db.collection('withdrawals').doc(),
+        {
+          uid,
+          amount: dto.amount,
+          destination: dto.destination,
+          status: 'pending',
+          requestedAt: new Date().toISOString(),
+        },
+        { merge: false },
+      );
     });
 
     return { message: 'Withdrawal request submitted' };
   }
 
-  /* ── paginated history ── */
+  /* ─────────── Top-up (manual) ─────────── */
+  async topupWallet(uid: string, nairaAmount: number) {
+    if (!uid || nairaAmount <= 0) {
+      throw new BadRequestException('Invalid uid or amount');
+    }
+
+    const coins = Math.floor(nairaAmount / COIN_RATE);
+
+    await this.firebase.db
+      .collection('users')
+      .doc(uid)
+      .update({ coins: FieldValue.increment(coins) });
+
+    return {
+      message: `Wallet topped up with ${coins} coins`,
+      coinsAdded: coins,
+    };
+  }
+
+  /* ─────────── Paginated history ─────────── */
   async getTransactions(uid: string, limit = 20, cursor?: string) {
     let ref = this.firebase.db
       .collection('withdrawals')

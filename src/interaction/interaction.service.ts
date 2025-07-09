@@ -7,11 +7,11 @@ import {
   Timestamp,
 } from 'firebase-admin/firestore';
 
-import { FirebaseService }      from 'src/firestore/firebase.service';
-import { GIFT_CATALOG }         from './gift-types.const';
-import { SendGiftDto }          from './dto/send-gift.dto';
+import { FirebaseService } from 'src/firestore/firebase.service';
+import { GIFT_CATALOG }    from './gift-types.const';
+import { SendGiftDto }     from './dto/send-gift.dto';
 
-const GIFT_COOLDOWN_MS = 5_000;   // 5-second spam guard
+const GIFT_COOLDOWN_MS = 5_000;
 
 @Injectable()
 export class InteractionService {
@@ -104,7 +104,7 @@ export class InteractionService {
     };
   }
 
-  /* ───────────────────── Gifts (with deduction) ───────────────────── */
+  /* ─────────────── Gift w/ Deduction & Cooldown ─────────────── */
   async sendGift(
     postId: string,
     senderUid: string,
@@ -121,7 +121,7 @@ export class InteractionService {
     if (!post?.uid) throw new BadRequestException('Post not found');
     const receiverUid = post.uid;
 
-    /* cooldown */
+    // Cooldown check
     const latest = await this.firebase.db
       .collection(`posts/${postId}/gifts`)
       .where('senderUid', '==', senderUid)
@@ -152,11 +152,11 @@ export class InteractionService {
       if (senderCoins < totalPrice)
         throw new BadRequestException('Insufficient balance');
 
-      /* debit / credit */
+      // Debit sender, credit receiver
       tx.update(senderRef,   { coins: senderCoins - totalPrice });
-      tx.set   (receiverRef, { coins: FieldValue.increment(totalPrice) }, { merge: true });
+      tx.set(receiverRef,    { coins: FieldValue.increment(totalPrice) }, { merge: true });
 
-      /* gift record */
+      // Create gift
       const newGiftRef = giftsCol.doc();
       tx.set(newGiftRef, {
         postId,
@@ -168,7 +168,7 @@ export class InteractionService {
         createdAt: Timestamp.now(),
       });
 
-      /* wallet log */
+      // Log wallet transaction
       tx.set(logCol.doc(), {
         uid: senderUid,
         type: 'gift',

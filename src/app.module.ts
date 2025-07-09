@@ -1,4 +1,3 @@
-// src/app.module.ts
 import { Module } from '@nestjs/common';
 
 import { AuthModule } from './auth/auth.module';
@@ -12,6 +11,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { PlunkModule } from './plunk/plunk.module';
 import { MediaModule } from './media/media.module';
 import { CloudflareModule } from './cloudflare/cloudflare.module';
+import { PaymentsModule } from './payments/payments.module';   // ← NEW
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -29,8 +29,9 @@ import { AppService } from './app.service';
     PlunkModule,
     AdminModule,
     WalletModule,
+    PaymentsModule,                                           // ← NEW
   ],
-  controllers: [AppController],      
-  providers: [AppService],      
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
