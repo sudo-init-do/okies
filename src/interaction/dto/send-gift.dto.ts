@@ -1,23 +1,12 @@
-import { IsString, IsNotEmpty, IsInt, Min, IsIn } from 'class-validator';
+import { IsInt, Min, IsString, IsIn } from 'class-validator';
+import { GIFT_CATALOG } from '../gift-types.const';
 
-/**
- * DTO for /interact/gift
- * - postId  : the post that receives the gift
- * – giftType: key that must exist in GIFT_CATALOG
- * – amount  : how many units (min 1)
- */
 export class SendGiftDto {
   @IsString()
-  @IsNotEmpty({ message: 'postId is required' })
-  postId: string;
+  @IsIn(Object.keys(GIFT_CATALOG), { message: 'giftType is invalid' })
+  giftType!: keyof typeof GIFT_CATALOG;
 
-  @IsString()
-  @IsIn(['rose', 'diamond', 'gold'], {
-    message: 'giftType is invalid',
-  }) // adjust to match your catalog keys
-  giftType: string;
-
-  @IsInt({ message: 'amount must be an integer' })
-  @Min(1, { message: 'amount must be at least 1' })
-  amount: number;
+  @IsInt()
+  @Min(1)
+  amount!: number; // units of the gift
 }

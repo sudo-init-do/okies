@@ -3,10 +3,13 @@ import {
   UnauthorizedException,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
-import { RequestOtpDto } from './dto/request-otp.dto';
-import { VerifyOtpDto } from './dto/verify-otp.dto';
-import { DecodedIdToken, getAuth, UserRecord } from 'firebase-admin/auth';
+import {
+  getAuth,
+  UserRecord,
+  DecodedIdToken,
+} from 'firebase-admin/auth';
 import { FirebaseService } from 'src/firestore/firebase.service';
 import { PlunkService } from 'src/plunk/plunk.service';
 import { UserProfile } from 'src/firestore/types/user-profile.type';
@@ -15,132 +18,228 @@ import * as jwt from 'jsonwebtoken';
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly firebaseService: FirebaseService,
-    private readonly plunkService: PlunkService,
+    private readonly firebase: FirebaseService,
+    private readonly plunk: PlunkService,
   ) {}
 
-  /**
-   * Step 1 — Request OTP:
-   * Generates a 6-digit OTP, stores it in Firestore, and sends it via Plunk.
-   */
-  async requestOtp(dto: RequestOtpDto) {
+  /* ──────────────── OTP AUTH ──────────────── */
+  async requestOtp(dto: { email: string }) {
     const email = dto.email.toLowerCase();
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    try {
-      await this.firebaseService.setDocument('otp_verification', email, {
-        otp,
-        createdAt: now.toISOString(),
-        expiresAt: expiresAt.toISOString(),
-      });
-
-      await this.plunkService.sendOtpEmail(email, otp);
-
-      return { message: `OTP sent to ${email}` };
-    } catch (err) {
-      console.error('❌ Error in requestOtp:', err);
-      throw new InternalServerErrorException(
-        'Failed to send OTP. Try again later.',
-      );
-    }
-  }
-
-  /**
-   * Step 2 — Verify OTP:
-   * Validates OTP and issues JWT. Creates Firebase Auth user and Firestore user record if needed.
-   */
-  async verifyOtp(dto: VerifyOtpDto) {
-    const email = dto.email.toLowerCase();
-    const otp = dto.otp;
-
-    const record = await this.firebaseService.getDocument<{
-      otp: string;
-      expiresAt: string;
-    }>('otp_verification', email);
-
-    if (!record || record.otp !== otp) {
-      throw new UnauthorizedException('Invalid or expired OTP');
-    }
-
-    const now = new Date();
-    const expires = new Date(record.expiresAt);
-    if (now > expires) {
-      throw new UnauthorizedException('OTP has expired');
-    }
-
-    let userRecord: UserRecord;
-    try {
-      userRecord = await getAuth().getUserByEmail(email);
-    } catch {
-      try {
-        userRecord = await getAuth().createUser({ email });
-      } catch (err) {
-        console.error('❌ Error creating Firebase user:', err);
-        throw new InternalServerErrorException(
-          'Failed to create user account.',
-        );
-      }
-    }
-
-    const uid = userRecord.uid;
-    const safeEmail = userRecord.email || email;
-
-    const existing = await this.firebaseService.getDocument<UserProfile>(
-      'users',
-      uid,
-    );
-
-    if (!existing) {
-      await this.firebaseService.setDocument<UserProfile>('users', uid, {
-        uid,
-        email: safeEmail,
-        phoneNumber: userRecord.phoneNumber || '',
-        createdAt: new Date().toISOString(),
-        displayName: '',
-        avatar: '',
-        bio: '',
-      });
-    }
-
-    // ✅ Clean up the OTP after verification
-    await this.firebaseService.setDocument('otp_verification', email, {});
-
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      throw new InternalServerErrorException(
-        'JWT_SECRET is not defined in environment variables',
-      );
-    }
-
-    const token = jwt.sign({ uid, email: safeEmail }, jwtSecret, {
-      expiresIn: '7d',
+    await this.firebase.setDocument('otp_verification', email, {
+      otp,
+      createdAt: new Date().toISOString(),
+      expiresAt: expiresAt.toISOString(),
     });
 
+    await this.plunk.sendOtpEmail(email, otp);
+    return { message: `OTP sent to ${email}` };
+  }
+
+  async verifyOtp(dto: { email: string; otp: string }) {
+    const email = dto.email.toLowerCase();
+    const record = await this.firebase.getDocument<{ otp: string; expiresAt: string }>(
+      'otp_verification',
+      email,
+    );
+
+    if (!record || record.otp !== dto.otp)
+      throw new UnauthorizedException('Invalid or expired OTP');
+
+    if (new Date() > new Date(record.expiresAt))
+      throw new UnauthorizedException('OTP has expired');
+
+    let fbUser: UserRecord;
+    try {
+      fbUser = await getAuth().getUserByEmail(email);
+    } catch {
+      fbUser = await getAuth().createUser({ email });
+    }
+
+    const uid = fbUser.uid;
+    const profile =
+      (await this.firebase.getDocument<UserProfile>('users', uid)) ??
+      (await this._createInitialProfile(uid, email));
+
+    const token = this._signJwt(uid, profile.email, profile.role ?? 'user');
+
+    await this.firebase.setDocument('otp_verification', email, {});
     return {
-      message: `Email ${safeEmail} verified successfully`,
+      message: `Email ${email} verified successfully`,
       token,
+      user: { uid, email: profile.email, role: profile.role },
     };
   }
 
-  /**
-   * Step 3 — Get current authenticated user profile.
-   */
-  async getProfile(user: DecodedIdToken | undefined) {
-    if (!user) {
-      throw new UnauthorizedException('User not authenticated');
+  /* ──────────────── EMAIL SIGNUP ──────────────── */
+  async signupWithEmail(email: string, password: string) {
+    email = email.toLowerCase();
+
+    try {
+      await getAuth().getUserByEmail(email);
+      throw new BadRequestException('Email already in use');
+    } catch (err: any) {
+      if (!err.message?.includes('no user record')) throw err;
     }
 
-    const profile = await this.firebaseService.getDocument<UserProfile>(
-      'users',
-      user.uid,
+    const fbUser = await getAuth().createUser({
+      email,
+      password,
+      emailVerified: false,
+    });
+
+    const verifyLink = await getAuth().generateEmailVerificationLink(email);
+    await this.plunk.sendOtpEmail(
+      email,
+      `Welcome to Okies! Please verify your email: <a href="${verifyLink}">${verifyLink}</a>`,
     );
 
-    if (!profile) {
-      throw new NotFoundException('User profile not found');
+    const profile = await this._createInitialProfile(fbUser.uid, email);
+
+    return {
+      message: 'Signup successful. Please check your email to verify.',
+      user: {
+        uid: fbUser.uid,
+        email: profile.email,
+      },
+    };
+  }
+
+  /* ──────────────── EMAIL LOGIN ──────────────── */
+  async loginWithEmail(email: string, password: string) {
+    email = email.toLowerCase();
+
+    const apiKey = process.env.FIREBASE_WEB_API_KEY;
+    if (!apiKey) throw new InternalServerErrorException('FIREBASE_WEB_API_KEY not set');
+
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, returnSecureToken: true }),
+      },
+    );
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new UnauthorizedException(data?.error?.message || 'Login failed');
     }
 
+    if (!data.emailVerified) {
+      throw new UnauthorizedException('Please verify your email before logging in');
+    }
+
+    const uid = data.localId;
+    const profile =
+      (await this.firebase.getDocument<UserProfile>('users', uid)) ??
+      (await this._createInitialProfile(uid, email));
+
+    const token = this._signJwt(uid, profile.email, profile.role ?? 'user');
+
+    return {
+      message: 'Login successful',
+      token,
+      user: { uid, email: profile.email, role: profile.role },
+    };
+  }
+
+  /* ──────────────── GOOGLE LOGIN ──────────────── */
+  async googleLogin(idToken: string) {
+    let decoded: DecodedIdToken;
+    try {
+      decoded = await getAuth().verifyIdToken(idToken);
+    } catch {
+      throw new UnauthorizedException('Invalid Google ID token');
+    }
+
+    const { uid, email } = decoded;
+    if (!email) {
+      throw new BadRequestException('Google account has no email');
+    }
+
+    const profile =
+      (await this.firebase.getDocument<UserProfile>('users', uid)) ??
+      (await this._createInitialProfile(uid, email.toLowerCase()));
+
+    const token = this._signJwt(uid, profile.email, profile.role ?? 'user');
+
+    return {
+      message: 'Google login successful',
+      token,
+      user: { uid, email: profile.email, role: profile.role },
+    };
+  }
+
+  /* ──────────────── PASSWORD RESET ──────────────── */
+  async sendPasswordReset(email: string) {
+    email = email.toLowerCase();
+
+    try {
+      await getAuth().getUserByEmail(email);
+    } catch {
+      throw new NotFoundException('No account found for that email');
+    }
+
+    const link = await getAuth().generatePasswordResetLink(email);
+    await this.plunk.sendOtpEmail(
+      email,
+      `Reset your Okies password: <a href="${link}">${link}</a>`,
+    );
+
+    return { message: 'Password reset email sent' };
+  }
+
+  /* ──────────────── USER PROFILE UPDATE ──────────────── */
+  async updateProfile(uid: string, updates: Partial<{ displayName: string; avatar: string; bio: string }>) {
+    const allowed = ['displayName', 'avatar', 'bio'];
+    const filtered: Record<string, string> = {};
+
+    for (const key of allowed) {
+      if (updates[key]) filtered[key] = updates[key]!;
+    }
+
+    if (Object.keys(filtered).length === 0) {
+      throw new BadRequestException('No valid fields to update');
+    }
+
+    await this.firebase.updateDocument('users', uid, filtered);
+    return { message: 'Profile updated successfully' };
+  }
+
+  /* ──────────────── GET CURRENT USER ──────────────── */
+  async getProfile(user: DecodedIdToken | undefined) {
+    if (!user) throw new UnauthorizedException('User not authenticated');
+
+    const profile = await this.firebase.getDocument<UserProfile>('users', user.uid);
+    if (!profile) throw new NotFoundException('User profile not found');
+
     return profile;
+  }
+
+  /* ──────────────── HELPERS ──────────────── */
+  private async _createInitialProfile(uid: string, email: string): Promise<UserProfile> {
+    const profile: UserProfile = {
+      uid,
+      email,
+      phoneNumber: '',
+      displayName: '',
+      avatar: '',
+      bio: '',
+      coins: 0,
+      role: 'user',
+      createdAt: new Date().toISOString(),
+    };
+    await this.firebase.setDocument<UserProfile>('users', uid, profile);
+    return profile;
+  }
+
+  private _signJwt(uid: string, email: string, role: string): string {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new InternalServerErrorException('JWT_SECRET not set');
+
+    return jwt.sign({ uid, email, role }, secret, { expiresIn: '7d' });
   }
 }

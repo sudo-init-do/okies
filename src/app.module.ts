@@ -1,20 +1,25 @@
+// src/app.module.ts
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
 
+import { FirebaseModule } from './firestore/firebase.module';
 import { AuthModule } from './auth/auth.module';
+import { CloudflareModule } from './cloudflare/cloudflare.module';
 import { UserModule } from './user/user.module';
-import { WithdrawalsController } from './withdrawals/withdrawals.controller';
 import { PostModule } from './post/post.module';
 import { InteractionModule } from './interaction/interaction.module';
-import { EarningsModule } from './earnings/earnings.module';
-import { FirebaseModule } from './firestore/firebase.module';
-import { PlunkModule } from './plunk/plunk.module';
 import { MediaModule } from './media/media.module';
-import { CloudflareModule } from './cloudflare/cloudflare.module';
-import { AdminController } from './admin/admin.controller';
+import { EarningsModule } from './earnings/earnings.module';
+import { PlunkModule } from './plunk/plunk.module';
+import { FollowModule } from './follow/follow.module';
+import { ReportModule } from './report/report.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { AdminModule } from './admin/admin.module';
+import { WalletModule } from './wallet/wallet.module';
+import { PaymentsModule } from './payments/payments.module';
+import { LiveModule } from './live/live.module'; // <-- your new live-stream & chat module
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -27,14 +32,15 @@ import { RolesGuard } from './auth/guards/roles.guard';
     MediaModule,
     EarningsModule,
     PlunkModule,
+    FollowModule,
+    ReportModule,
+    AnalyticsModule,
+    AdminModule,
+    WalletModule,
+    PaymentsModule,
+    LiveModule,
   ],
-  controllers: [AppController, AdminController, WithdrawalsController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
-  ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

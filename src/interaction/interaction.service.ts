@@ -1,15 +1,23 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { FirebaseService } from 'src/firestore/firebase.service';
-import { GIFT_CATALOG } from './gift-types.const';
-import { FieldValue, Timestamp } from 'firebase-admin/firestore';
+import {
+  Injectable,
+  BadRequestException,
+} from '@nestjs/common';
+import {
+  FieldValue,
+  Timestamp,
+} from 'firebase-admin/firestore';
 
-const GIFT_COOLDOWN_MS = 5_000; // 5‑second spam guard
+import { FirebaseService } from 'src/firestore/firebase.service';
+import { GIFT_CATALOG }    from './gift-types.const';
+import { SendGiftDto }     from './dto/send-gift.dto';
+
+const GIFT_COOLDOWN_MS = 5_000;
 
 @Injectable()
 export class InteractionService {
   constructor(private readonly firebase: FirebaseService) {}
 
-  /* ───────────── Likes ───────────── */
+  /* ───────────────────── Likes ───────────────────── */
   async likePost(postId: string, uid: string): Promise<void> {
     if (!postId || !uid) throw new BadRequestException('Missing postId or uid');
 
@@ -50,7 +58,7 @@ export class InteractionService {
       .update({ likeCount: FieldValue.increment(-1) });
   }
 
-  /* ───────────── Comments ───────────── */
+  /* ───────────────────── Comments ───────────────────── */
   async commentOnPost(
     postId: string,
     uid: string,
@@ -96,11 +104,11 @@ export class InteractionService {
     };
   }
 
-  /* ───────────── Gifts (w/ 5‑second cooldown) ───────────── */
+  /* ─────────────── Gift w/ Deduction & Cooldown ─────────────── */
   async sendGift(
     postId: string,
     senderUid: string,
-    giftType: string,
+    giftType: SendGiftDto['giftType'],
     amount: number,
   ): Promise<string> {
     if (!postId.trim()) throw new BadRequestException('postId cannot be empty');
@@ -109,55 +117,75 @@ export class InteractionService {
       throw new BadRequestException('Unknown gift type');
     if (amount < 1) throw new BadRequestException('Amount must be at least 1');
 
-    // fetch post owner
-    const post = await this.firebase.getDocument<{ uid: string }>(
-      'posts',
-      postId,
-    );
+    const post = await this.firebase.getDocument<{ uid: string }>('posts', postId);
     if (!post?.uid) throw new BadRequestException('Post not found');
+    const receiverUid = post.uid;
 
-    /* ---- cooldown check ---- */
-    const latestGiftSnap = await this.firebase.db
+    // Cooldown check
+    const latest = await this.firebase.db
       .collection(`posts/${postId}/gifts`)
       .where('senderUid', '==', senderUid)
       .orderBy('createdAt', 'desc')
       .limit(1)
       .get();
 
-    if (!latestGiftSnap.empty) {
-      const last = latestGiftSnap.docs[0].data() as { createdAt: Timestamp };
-      if (Date.now() - last.createdAt.toMillis() < GIFT_COOLDOWN_MS) {
+    if (!latest.empty) {
+      const diff = Date.now() - (latest.docs[0].data().createdAt as Timestamp).toMillis();
+      if (diff < GIFT_COOLDOWN_MS) {
         throw new BadRequestException(
-          `Slow down! You can send another gift in ${Math.ceil(
-            (GIFT_COOLDOWN_MS - (Date.now() - last.createdAt.toMillis())) /
-              1000,
-          )} s.`,
+          `Slow down – wait ${(GIFT_COOLDOWN_MS - diff) / 1000}s.`,
         );
       }
     }
-    /* ------------------------ */
 
-    const value = GIFT_CATALOG[giftType] * amount;
+    const unitPrice  = GIFT_CATALOG[giftType];
+    const totalPrice = unitPrice * amount;
 
-    const giftId = await this.firebase.addDocument(`posts/${postId}/gifts`, {
-      senderUid,
-      receiverUid: post.uid,
-      giftType,
-      amount,
-      value,
-      createdAt: Timestamp.now(),
+    const giftId = await this.firebase.db.runTransaction(async (tx) => {
+      const senderRef   = this.firebase.db.collection('users').doc(senderUid);
+      const receiverRef = this.firebase.db.collection('users').doc(receiverUid);
+      const giftsCol    = this.firebase.db.collection(`posts/${postId}/gifts`);
+      const logCol      = this.firebase.db.collection('wallet_transactions');
+
+      const senderSnap  = await tx.get(senderRef);
+      const senderCoins = (senderSnap.data()?.coins as number) ?? 0;
+      if (senderCoins < totalPrice)
+        throw new BadRequestException('Insufficient balance');
+
+      // Debit sender, credit receiver
+      tx.update(senderRef,   { coins: senderCoins - totalPrice });
+      tx.set(receiverRef,    { coins: FieldValue.increment(totalPrice) }, { merge: true });
+
+      // Create gift
+      const newGiftRef = giftsCol.doc();
+      tx.set(newGiftRef, {
+        postId,
+        senderUid,
+        receiverUid,
+        giftType,
+        amount,
+        value: totalPrice,
+        createdAt: Timestamp.now(),
+      });
+
+      // Log wallet transaction
+      tx.set(logCol.doc(), {
+        uid: senderUid,
+        type: 'gift',
+        direction: 'debit',
+        amount: totalPrice,
+        coinsAfter: senderCoins - totalPrice,
+        ref: newGiftRef.id,
+        createdAt: Timestamp.now(),
+      });
+
+      return newGiftRef.id;
     });
-
-    // increment receiver’s balance
-    await this.firebase.db
-      .collection('users')
-      .doc(post.uid)
-      .set({ coins: FieldValue.increment(value) }, { merge: true });
 
     return giftId;
   }
 
-  /* ───────────── Gift Leaderboard ───────────── */
+  /* ───────────────────── Leaderboard / Earnings ───────────────────── */
   async getGiftLeaderboard(postId: string, limit = 10) {
     const snap = await this.firebase.db
       .collection(`posts/${postId}/gifts`)
@@ -167,13 +195,9 @@ export class InteractionService {
     return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   }
 
-  /* ───────────── User Earnings ───────────── */
   async getUserEarnings(uid: string) {
     if (!uid) throw new BadRequestException('Missing user ID');
-    const user = await this.firebase.getDocument<{ coins?: number }>(
-      'users',
-      uid,
-    );
+    const user = await this.firebase.getDocument<{ coins?: number }>('users', uid);
     return { coins: user?.coins ?? 0 };
   }
 }
