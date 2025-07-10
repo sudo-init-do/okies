@@ -11,16 +11,16 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    'prettier'
+    'prettier',
   ],
   rules: {
-    // ← disable these unsafe-any checks so CI will pass
+    // temporary: turn off the unsafe-any checks so CI passes
     '@typescript-eslint/no-unsafe-assignment': 'off',
     '@typescript-eslint/no-unsafe-member-access': 'off',
     '@typescript-eslint/no-unsafe-argument': 'off',
     '@typescript-eslint/no-unsafe-call': 'off',
     '@typescript-eslint/no-unsafe-return': 'off',
 
-    // …keep any other rules you already have below…
+    // (leave any of your other custom rules here)
   },
 };
