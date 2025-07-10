@@ -14,13 +14,11 @@ module.exports = {
     'prettier',
   ],
   rules: {
-    // 🚨 disable these so CI passes
+    // temporarily turn these off so CI can pass
     '@typescript-eslint/no-unsafe-assignment': 'off',
     '@typescript-eslint/no-unsafe-member-access': 'off',
     '@typescript-eslint/no-unsafe-argument': 'off',
     '@typescript-eslint/no-unsafe-call': 'off',
     '@typescript-eslint/no-unsafe-return': 'off',
-
-    // …any other rules you already had…
   },
 };
