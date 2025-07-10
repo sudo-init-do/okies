@@ -1,10 +1,21 @@
 // src/payments/payments.controller.ts
-import { Controller, Post, Body, Headers, HttpCode, BadRequestException, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Headers,
+  HttpCode,
+  Req,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { Request } from 'express';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { AdminGuard } from 'src/auth/guards/admin.guard';
 
 @Controller('payments/flutter')
-export class PaymentsController {        // ← rename this line
+export class PaymentsController {
   constructor(private readonly payments: PaymentsService) {}
 
   @Post('init')
@@ -22,13 +33,8 @@ export class PaymentsController {        // ← rename this line
   }
 
   @Post('mock')
-  simulateTopUp(
-    @Body() body: { uid: string; coinAmount: number; amount?: number },
-    @Headers('x-dev-key') devKey: string,
-  ) {
-    if (devKey !== process.env.DEV_ADMIN_KEY) {
-      throw new BadRequestException('Unauthorized');
-    }
+  @UseGuards(AuthGuard, AdminGuard)
+  simulateTopUp(@Body() body: { uid: string; coinAmount: number; amount?: number }) {
     return this.payments.handleMockTopup(
       body.uid,
       body.coinAmount,

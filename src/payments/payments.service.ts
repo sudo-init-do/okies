@@ -4,6 +4,7 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { FirebaseService } from 'src/firestore/firebase.service';
 import * as crypto from 'crypto';
+import { FieldValue } from 'firebase-admin/firestore';
 
 @Injectable()
 export class PaymentsService {
@@ -98,24 +99,31 @@ export class PaymentsService {
     });
   }
 
-  // 👇 New: Handles local mock top-ups
+  // ✅ Updated: create user doc if missing
   async handleMockTopup(uid: string, coinAmount: number, amount: number) {
     const userRef = this.firebase.db.collection('users').doc(uid);
     const txRef = `mock_${Date.now()}`;
 
     await this.firebase.db.runTransaction(async (t) => {
-      const userSnap = await t.get(userRef);
-      if (!userSnap.exists) return;
+      const snap = await t.get(userRef);
 
-      const currentCoins = userSnap.data()?.coins || 0;
+      // Auto-create user doc if missing
+      if (!snap.exists) {
+        t.set(userRef, {
+          coins: 0,
+          email: `${uid}@mock.local`,
+          role: 'user',
+          createdAt: new Date().toISOString(),
+        });
+      }
 
+      // Add coins
       t.update(userRef, {
-        coins: currentCoins + coinAmount,
+        coins: FieldValue.increment(coinAmount),
       });
 
-      const txLogRef = userRef.collection('topups').doc(txRef);
-
-      t.set(txLogRef, {
+      // Log top-up
+      t.set(userRef.collection('topups').doc(txRef), {
         amount,
         coinAmount,
         txRef,
@@ -124,5 +132,7 @@ export class PaymentsService {
         timestamp: Date.now(),
       });
     });
+
+    return { message: `Mock top-up successful: +${coinAmount} coins` };
   }
 }

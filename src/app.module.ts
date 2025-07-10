@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LiveModule } from './live/live.module';
 
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
@@ -11,7 +12,11 @@ import { WalletModule } from './wallet/wallet.module';
 import { PlunkModule } from './plunk/plunk.module';
 import { MediaModule } from './media/media.module';
 import { CloudflareModule } from './cloudflare/cloudflare.module';
-import { PaymentsModule } from './payments/payments.module';   // ← NEW
+import { PaymentsModule } from './payments/payments.module';
+
+import { FollowModule } from './follow/follow.module';           
+import { ReportModule } from './report/report.module';           
+import { AnalyticsModule } from './analytics/analytics.module';  
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -29,7 +34,11 @@ import { AppService } from './app.service';
     PlunkModule,
     AdminModule,
     WalletModule,
-    PaymentsModule,                                           // ← NEW
+    PaymentsModule,
+    FollowModule,         
+    ReportModule,        
+    AnalyticsModule,
+    LiveModule,      
   ],
   controllers: [AppController],
   providers: [AppService],
