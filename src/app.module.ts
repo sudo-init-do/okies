@@ -14,7 +14,7 @@ import { MediaModule } from './media/media.module';
 import { CloudflareModule } from './cloudflare/cloudflare.module';
 import { PaymentsModule } from './payments/payments.module';
 
-import { FollowModule } from './follow/follow.module';           
+import { FollowModule } from './follow/follow.module';  
 import { ReportModule } from './report/report.module';           
 import { AnalyticsModule } from './analytics/analytics.module';  
 
