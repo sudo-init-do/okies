@@ -1,4 +1,5 @@
 // src/firestore/firebase.service.ts
+
 import { Injectable } from '@nestjs/common';
 import {
   getFirestore,
@@ -7,22 +8,20 @@ import {
   WithFieldValue,
   DocumentReference,
 } from 'firebase-admin/firestore';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { initializeApp, cert, getApps, ServiceAccount } from 'firebase-admin/app';
 
 @Injectable()
 export class FirebaseService {
   public db: Firestore;
 
   constructor() {
-    // Only initialize once
     if (!getApps().length) {
       const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
       if (!raw) {
-        throw new Error(
-          'FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set',
-        );
+        throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set');
       }
-      let serviceAccount;
+
+      let serviceAccount: ServiceAccount;
       try {
         serviceAccount = JSON.parse(raw);
       } catch (err) {
@@ -37,15 +36,12 @@ export class FirebaseService {
     }
 
     this.db = getFirestore();
-    // ignore undefined fields by default
     try {
       this.db.settings({ ignoreUndefinedProperties: true });
     } catch {
-      /* already set? ignore */
+      // already set
     }
   }
-
-  /* ────── Basic CRUD ────── */
 
   async setDocument<T extends DocumentData>(
     collection: string,
@@ -86,8 +82,6 @@ export class FirebaseService {
   ): DocumentReference<T> {
     return this.db.collection(collection).doc(docId) as DocumentReference<T>;
   }
-
-  /* ────── Sub-collections ────── */
 
   async setSubDocument<T extends DocumentData>(
     collection: string,

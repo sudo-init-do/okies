@@ -1,4 +1,5 @@
 // src/scripts/seed-bots.ts
+
 import {
   initializeApp,
   cert,
@@ -6,9 +7,6 @@ import {
   ServiceAccount,
 } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-
-// ↳ adjust the relative path to your service-account JSON
-import serviceAccount from '../config/firebase-service-account.json';
 
 interface BotUser {
   uid: string;
@@ -81,27 +79,43 @@ const bots: BotUser[] = [
 ];
 
 async function seedBots() {
-  // Initialise Firebase Admin once
+  // 1) Load and parse your service account JSON from env
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (!raw) {
+    console.error('❌ FIREBASE_SERVICE_ACCOUNT_JSON is not set');
+    process.exit(1);
+  }
+
+  let serviceAccount: ServiceAccount;
+  try {
+    serviceAccount = JSON.parse(raw);
+  } catch (err) {
+    console.error('❌ Invalid FIREBASE_SERVICE_ACCOUNT_JSON:', (err as Error).message);
+    process.exit(1);
+  }
+
+  // 2) Initialize Firebase Admin SDK once
   if (!getApps().length) {
-    initializeApp({
-      credential: cert(serviceAccount as ServiceAccount),
-    });
+    initializeApp({ credential: cert(serviceAccount) });
   }
   const db = getFirestore();
 
   console.log('🚀  Seeding bot users …');
 
   for (const bot of bots) {
-    await db.collection('users').doc(bot.uid).set(
-      {
-        uid: bot.uid,
-        displayName: bot.displayName,
-        avatar: bot.avatar,
-        bio: bot.bio,
-        createdAt: new Date().toISOString(),
-      },
-      { merge: true },
-    );
+    await db
+      .collection('users')
+      .doc(bot.uid)
+      .set(
+        {
+          uid: bot.uid,
+          displayName: bot.displayName,
+          avatar: bot.avatar,
+          bio: bot.bio,
+          createdAt: new Date().toISOString(),
+        },
+        { merge: true },
+      );
     console.log(`  • Seeded ${bot.displayName} (${bot.uid})`);
   }
 

@@ -1,3 +1,5 @@
+// src/scripts/bot-runner.ts
+
 import {
   initializeApp,
   cert,
@@ -7,14 +9,12 @@ import {
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as cron from 'node-cron';
 
-import serviceAccount from '../config/firebase-service-account.json';
-
 interface BotUser {
   uid: string;
   displayName: string;
 }
 
-// 10 bots you seeded earlier
+// ── Your 10 bot definitions ───────────────────────────────────────────
 const bots: BotUser[] = [
   { uid: 'bot_001', displayName: 'OkiesStar1' },
   { uid: 'bot_002', displayName: 'OkiesGuru' },
@@ -28,7 +28,7 @@ const bots: BotUser[] = [
   { uid: 'bot_010', displayName: 'MemeLord' },
 ];
 
-// sample media you’ve already uploaded to R2
+// ── Your media pool ───────────────────────────────────────────────────
 const mediaPool = [
   {
     url: 'https://<account>.r2.cloudflarestorage.com/<bucket>/sample1.mp4',
@@ -44,7 +44,7 @@ const mediaPool = [
   },
 ];
 
-// simple caption generator
+// ── Your caption list ─────────────────────────────────────────────────
 const captions = [
   'First take 🔥',
   'Morning vibes ☀️',
@@ -53,13 +53,27 @@ const captions = [
   'Weekend mood',
 ];
 
+// pick a random element
 function randomItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// lazy-init Firebase from JSON in env
 function initFirebase() {
   if (!getApps().length) {
-    initializeApp({ credential: cert(serviceAccount as ServiceAccount) });
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    if (!raw) {
+      throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON not set');
+    }
+    let sa: ServiceAccount;
+    try {
+      sa = JSON.parse(raw);
+    } catch (err) {
+      throw new Error(
+        'Invalid FIREBASE_SERVICE_ACCOUNT_JSON: ' + (err as Error).message,
+      );
+    }
+    initializeApp({ credential: cert(sa) });
   }
   return getFirestore();
 }
@@ -99,7 +113,6 @@ async function runOnce() {
   const db = initFirebase();
   const bot = randomItem(bots);
 
-  // 70 % chance to post, 30 % chance to like
   if (Math.random() < 0.7) {
     await postForBot(db, bot);
   } else {
@@ -107,11 +120,11 @@ async function runOnce() {
   }
 }
 
-// ────────────────────────────────────────────────
-//      ENTRY POINTS
-// ────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────
+// ENTRY POINTS
+// ─────────────────────────────────────────────────────────────────────
 
-// 1) Single run (used by npm run bot:once)
+// single run: `npm run bot:once`
 if (process.argv.includes('--once')) {
   runOnce()
     .then(() => process.exit(0))
@@ -121,13 +134,10 @@ if (process.argv.includes('--once')) {
     });
 }
 
-// 2) Loop forever using cron (npm run bot:loop)
-//    Every 10 minutes: choose a bot and act
+// cron loop: `npm run bot:loop`
 if (process.argv.includes('--loop')) {
   cron.schedule('*/10 * * * *', () => {
-    runOnce().catch((err) => {
-      console.error('Cron error:', err);
-    });
+    runOnce().catch((err) => console.error('Cron error:', err));
   });
   console.log('🤖 Bot loop started — posting/liking every 10 min');
 }
