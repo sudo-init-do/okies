@@ -1,3 +1,4 @@
+// src/firestore/firebase.service.ts
 import { Injectable } from '@nestjs/common';
 import {
   getFirestore,
@@ -6,35 +7,45 @@ import {
   WithFieldValue,
   DocumentReference,
 } from 'firebase-admin/firestore';
-import {
-  initializeApp,
-  cert,
-  getApps,
-  ServiceAccount,
-} from 'firebase-admin/app';
-import serviceAccount from '../config/firebase-service-account.json';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
 
 @Injectable()
 export class FirebaseService {
   public db: Firestore;
 
   constructor() {
-    /* Initialize Admin SDK only once */
+    // Only initialize once
     if (!getApps().length) {
-      initializeApp({ credential: cert(serviceAccount as ServiceAccount) });
+      const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+      if (!raw) {
+        throw new Error(
+          'FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set',
+        );
+      }
+      let serviceAccount;
+      try {
+        serviceAccount = JSON.parse(raw);
+      } catch (err) {
+        throw new Error(
+          'Invalid JSON in FIREBASE_SERVICE_ACCOUNT_JSON: ' + (err as Error).message,
+        );
+      }
+
+      initializeApp({
+        credential: cert(serviceAccount),
+      });
     }
 
-    const db = getFirestore();
-    /* ignoreUndefinedProperties → prevents Firestore “undefined” errors */
+    this.db = getFirestore();
+    // ignore undefined fields by default
     try {
-      db.settings({ ignoreUndefinedProperties: true });
+      this.db.settings({ ignoreUndefinedProperties: true });
     } catch {
-      /* settings() was already called – safe to ignore */
+      /* already set? ignore */
     }
-    this.db = db;
   }
 
-  /* ───────────── Basic CRUD ───────────── */
+  /* ────── Basic CRUD ────── */
 
   async setDocument<T extends DocumentData>(
     collection: string,
@@ -56,7 +67,7 @@ export class FirebaseService {
     collection: string,
     docId: string,
   ): Promise<T | null> {
-    if (!docId?.trim()) return null; // ⬅ guard against empty ID
+    if (!docId?.trim()) return null;
     const snap = await this.db.collection(collection).doc(docId).get();
     return snap.exists ? (snap.data() as T) : null;
   }
@@ -76,7 +87,7 @@ export class FirebaseService {
     return this.db.collection(collection).doc(docId) as DocumentReference<T>;
   }
 
-  /* ───────────── Helpers for sub‑collections ───────────── */
+  /* ────── Sub-collections ────── */
 
   async setSubDocument<T extends DocumentData>(
     collection: string,
@@ -116,7 +127,6 @@ export class FirebaseService {
       .collection(collection)
       .where(field, '==', value)
       .get();
-
     return snap.docs.map((d) => d.data() as T);
   }
 }
