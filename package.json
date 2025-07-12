@@ -9,7 +9,7 @@
     "bot:once": "ts-node -r tsconfig-paths/register src/scripts/bot-runner.ts --once",
     "bot:loop": "ts-node -r tsconfig-paths/register src/scripts/bot-runner.ts --loop",
     "seed:bot-posts": "ts-node -r tsconfig-paths/register src/scripts/seed-bot-posts.ts",
-    "build": "nest build --config tsconfig.build.json",
+    "build": "node --max_old_space_size=512 ./node_modules/.bin/nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
