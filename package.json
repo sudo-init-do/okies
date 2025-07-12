@@ -9,18 +9,16 @@
     "bot:once": "ts-node -r tsconfig-paths/register src/scripts/bot-runner.ts --once",
     "bot:loop": "ts-node -r tsconfig-paths/register src/scripts/bot-runner.ts --loop",
     "seed:bot-posts": "ts-node -r tsconfig-paths/register src/scripts/seed-bot-posts.ts",
-    "build": "node --max_old_space_size=512 ./node_modules/.bin/nest build",
+    "build": "node build-esbuild.js",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/main.js",
     "lint": "eslint --config .eslintrc.js \"{src,apps,libs,test}/**/*.ts\" --fix",
-
     "test": "jest --config jest.config.js --passWithNoTests",
     "test:watch": "jest --config jest.config.js --watch",
     "test:cov": "jest --config jest.config.js --coverage",
-
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:live": "jest --config ./jest.live.config.js"
@@ -65,6 +63,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/superagent": "^8.1.9",
     "@types/supertest": "^6.0.3",
+    "esbuild": "^0.25.6",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
