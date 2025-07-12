@@ -20,7 +20,7 @@ export class FirebaseService {
   public db: Firestore;
 
   constructor() {
-    // Only initialize Firebase once
+    // Initialize Firebase only once
     if (!getApps().length) {
       const projectId   = process.env.FIREBASE_PROJECT_ID!;
       const clientEmail = process.env.FIREBASE_CLIENT_EMAIL!;
@@ -59,7 +59,7 @@ export class FirebaseService {
     try {
       this.db.settings({ ignoreUndefinedProperties: true });
     } catch {
-      // already applied
+      // settings already applied
     }
   }
 
