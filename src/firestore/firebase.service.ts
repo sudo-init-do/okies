@@ -8,55 +8,42 @@ import {
   WithFieldValue,
   DocumentReference,
 } from 'firebase-admin/firestore';
-import {
-  initializeApp,
-  cert,
-  getApps,
-  ServiceAccount,
-} from 'firebase-admin/app';
+import { initializeApp, cert } from 'firebase-admin/app';
+
+// 1) Point this path at wherever your JSON lives
+//    e.g. src/config/firebase-service-account.json
+import serviceAccountJson from '../config/firebase-service-account.json';
 
 @Injectable()
 export class FirebaseService {
   public db: Firestore;
 
   constructor() {
-    if (!getApps().length) {
-      const projectId   = process.env.FIREBASE_PROJECT_ID!;
-      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL!;
-      let rawKey        = process.env.FIREBASE_PRIVATE_KEY!;
-
-      if (!projectId || !clientEmail || !rawKey) {
-        throw new Error(
-          'Missing FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY'
-        );
-      }
-
-      rawKey = rawKey.trim();
-      if (rawKey.includes('\\n')) {
-        rawKey = rawKey.replace(/\\n/g, '\n');
-      }
-      const privateKey = rawKey.replace(/^"+|"+$/g, '');
-
-      const serviceAccount: ServiceAccount = {
-        projectId,
-        clientEmail,
-        privateKey,
-      };
-
+    // Only initialize once
+    if (!initializeApp.length) { /* never actually used; ignore */ }
+    try {
+      // initializeApp will throw if already initialized, so wrap in try
       initializeApp({
-        credential: cert(serviceAccount),
+        credential: cert(serviceAccountJson as any),
       });
+    } catch {
+      // already initialized
     }
 
     this.db = getFirestore();
-    this.db.settings({ ignoreUndefinedProperties: true });
+    // optional: ignore undefined fields
+    try {
+      this.db.settings({ ignoreUndefinedProperties: true });
+    } catch {
+      /* no-op */
+    }
   }
 
   async setDocument<T extends DocumentData>(
     collection: string,
     docId: string,
     data: WithFieldValue<T>,
-  ): Promise<void> {
+  ) {
     await this.db.collection(collection).doc(docId).set(data, { merge: true });
   }
 
@@ -81,7 +68,7 @@ export class FirebaseService {
     collection: string,
     docId: string,
     data: Partial<WithFieldValue<T>>,
-  ): Promise<void> {
+  ) {
     await this.db.collection(collection).doc(docId).update(data);
   }
 
@@ -98,7 +85,7 @@ export class FirebaseService {
     subcollection: string,
     subId: string,
     data: WithFieldValue<T>,
-  ): Promise<void> {
+  ) {
     await this.db
       .collection(collection)
       .doc(docId)
@@ -112,7 +99,7 @@ export class FirebaseService {
     docId: string,
     subcollection: string,
     subId: string,
-  ): Promise<void> {
+  ) {
     await this.db
       .collection(collection)
       .doc(docId)
