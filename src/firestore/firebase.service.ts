@@ -22,24 +22,24 @@ export class FirebaseService {
   constructor() {
     // Initialize Firebase only once
     if (!getApps().length) {
-      const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
-      if (!b64) {
+      const projectId   = process.env.FIREBASE_PROJECT_ID;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const rawKey      = process.env.FIREBASE_PRIVATE_KEY;
+
+      if (!projectId || !clientEmail || !rawKey) {
         throw new Error(
-          'FIREBASE_SERVICE_ACCOUNT_BASE64 environment variable is not set'
+          'One of FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY is not set'
         );
       }
 
-      let serviceAccount: ServiceAccount;
-      try {
-        // Decode Base64 → JSON string → ServiceAccount object
-        const json = Buffer.from(b64, 'base64').toString('utf8');
-        serviceAccount = JSON.parse(json);
-      } catch (err) {
-        throw new Error(
-          'Invalid Base64 JSON in FIREBASE_SERVICE_ACCOUNT_BASE64: ' +
-            (err as Error).message
-        );
-      }
+      // Turn the literal "\n" sequences back into real newlines
+      const privateKey = rawKey.replace(/\\n/g, '\n');
+
+      const serviceAccount: ServiceAccount = {
+        projectId,
+        clientEmail,
+        privateKey,
+      };
 
       initializeApp({
         credential: cert(serviceAccount),
@@ -118,7 +118,7 @@ export class FirebaseService {
   ): Promise<void> {
     await this.db
       .collection(collection)
-      .doc(docId)
+      .doc(collection)
       .collection(subcollection)
       .doc(subId)
       .delete();
