@@ -20,20 +20,28 @@ export class FirebaseService {
   public db: Firestore;
 
   constructor() {
-    // Initialize Firebase only once
+    // Only initialize Firebase once
     if (!getApps().length) {
-      const projectId   = process.env.FIREBASE_PROJECT_ID;
-      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-      const rawKey      = process.env.FIREBASE_PRIVATE_KEY;
+      const projectId   = process.env.FIREBASE_PROJECT_ID!;
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL!;
+      let rawKey        = process.env.FIREBASE_PRIVATE_KEY!;
 
       if (!projectId || !clientEmail || !rawKey) {
         throw new Error(
-          'One of FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY is not set'
+          'Missing one of FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, or FIREBASE_PRIVATE_KEY'
         );
       }
 
-      // Turn the literal "\n" sequences back into real newlines
-      const privateKey = rawKey.replace(/\\n/g, '\n');
+      // Trim any accidental whitespace
+      rawKey = rawKey.trim();
+
+      // If the key is a single line with literal "\n", un-escape those to real newlines
+      if (rawKey.includes('\\n')) {
+        rawKey = rawKey.replace(/\\n/g, '\n');
+      }
+
+      // Remove surrounding quotes if pasted accidentally
+      const privateKey = rawKey.replace(/^"+|"+$/g, '');
 
       const serviceAccount: ServiceAccount = {
         projectId,
@@ -51,7 +59,7 @@ export class FirebaseService {
     try {
       this.db.settings({ ignoreUndefinedProperties: true });
     } catch {
-      // settings already applied
+      // already applied
     }
   }
 
