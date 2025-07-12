@@ -20,7 +20,6 @@ export class FirebaseService {
   public db: Firestore;
 
   constructor() {
-    // Initialize Firebase only once
     if (!getApps().length) {
       const projectId   = process.env.FIREBASE_PROJECT_ID!;
       const clientEmail = process.env.FIREBASE_CLIENT_EMAIL!;
@@ -28,19 +27,14 @@ export class FirebaseService {
 
       if (!projectId || !clientEmail || !rawKey) {
         throw new Error(
-          'Missing one of FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, or FIREBASE_PRIVATE_KEY'
+          'Missing FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY'
         );
       }
 
-      // Trim any accidental whitespace
       rawKey = rawKey.trim();
-
-      // If the key is a single line with literal "\n", un-escape those to real newlines
       if (rawKey.includes('\\n')) {
         rawKey = rawKey.replace(/\\n/g, '\n');
       }
-
-      // Remove surrounding quotes if pasted accidentally
       const privateKey = rawKey.replace(/^"+|"+$/g, '');
 
       const serviceAccount: ServiceAccount = {
@@ -54,13 +48,8 @@ export class FirebaseService {
       });
     }
 
-    // Initialize Firestore client
     this.db = getFirestore();
-    try {
-      this.db.settings({ ignoreUndefinedProperties: true });
-    } catch {
-      // settings already applied
-    }
+    this.db.settings({ ignoreUndefinedProperties: true });
   }
 
   async setDocument<T extends DocumentData>(
@@ -68,10 +57,7 @@ export class FirebaseService {
     docId: string,
     data: WithFieldValue<T>,
   ): Promise<void> {
-    await this.db
-      .collection(collection)
-      .doc(docId)
-      .set(data, { merge: true });
+    await this.db.collection(collection).doc(docId).set(data, { merge: true });
   }
 
   async addDocument<T extends DocumentData>(
