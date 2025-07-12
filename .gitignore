@@ -29,4 +29,3 @@ logs
 .DS_Store
 #private file 
 .env
-src/config/firebase-service-account.json
