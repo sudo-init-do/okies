@@ -20,22 +20,23 @@ export class FirebaseService {
   public db: Firestore;
 
   constructor() {
-    // Only initialize once
+    // Initialize Firebase only once
     if (!getApps().length) {
-      const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-      if (!raw) {
+      const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+      if (!b64) {
         throw new Error(
-          'FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set'
+          'FIREBASE_SERVICE_ACCOUNT_BASE64 environment variable is not set'
         );
       }
 
       let serviceAccount: ServiceAccount;
       try {
-        // Parse the JSON string (will restore real newlines)
-        serviceAccount = JSON.parse(raw);
+        // Decode Base64 → JSON string → ServiceAccount object
+        const json = Buffer.from(b64, 'base64').toString('utf8');
+        serviceAccount = JSON.parse(json);
       } catch (err) {
         throw new Error(
-          'Invalid JSON in FIREBASE_SERVICE_ACCOUNT_JSON: ' +
+          'Invalid Base64 JSON in FIREBASE_SERVICE_ACCOUNT_BASE64: ' +
             (err as Error).message
         );
       }
@@ -59,10 +60,7 @@ export class FirebaseService {
     docId: string,
     data: WithFieldValue<T>,
   ): Promise<void> {
-    await this.db
-      .collection(collection)
-      .doc(docId)
-      .set(data, { merge: true });
+    await this.db.collection(collection).doc(docId).set(data, { merge: true });
   }
 
   async addDocument<T extends DocumentData>(
