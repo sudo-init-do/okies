@@ -16,6 +16,7 @@ async function bootstrap() {
     '/webhook/paystack',
     express.raw({ type: 'application/json' }),
   );
+
   // Fallback JSON parser for the rest of the API
   app.use(express.json());
 
@@ -29,10 +30,10 @@ async function bootstrap() {
   );
 
   /* ───────────── Start Server ───────────── */
-  // Read PORT from env (Render, Heroku, etc.) or default to 3000
-  const port = parseInt(process.env.PORT ?? '3000', 10);
-  await app.listen(port);
-  console.log(`🚀 Application listening on port ${port}`);
+  // use PORT from env (Render, Heroku, Docker, etc.)
+  const port = parseInt(process.env.PORT || '3000', 10);
+  await app.listen(port, '0.0.0.0');
+  console.log(`🚀  Application is running on: http://0.0.0.0:${port}`);
 }
 
 bootstrap().catch((error) => {
