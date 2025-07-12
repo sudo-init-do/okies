@@ -60,7 +60,10 @@ export class FirebaseService {
     docId: string,
     data: WithFieldValue<T>,
   ): Promise<void> {
-    await this.db.collection(collection).doc(docId).set(data, { merge: true });
+    await this.db
+      .collection(collection)
+      .doc(docId)
+      .set(data, { merge: true });
   }
 
   async addDocument<T extends DocumentData>(
@@ -118,7 +121,7 @@ export class FirebaseService {
   ): Promise<void> {
     await this.db
       .collection(collection)
-      .doc(collection)
+      .doc(docId)
       .collection(subcollection)
       .doc(subId)
       .delete();
