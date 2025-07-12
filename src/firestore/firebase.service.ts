@@ -8,25 +8,35 @@ import {
   WithFieldValue,
   DocumentReference,
 } from 'firebase-admin/firestore';
-import { initializeApp, cert, getApps, ServiceAccount } from 'firebase-admin/app';
+import {
+  initializeApp,
+  cert,
+  getApps,
+  ServiceAccount,
+} from 'firebase-admin/app';
 
 @Injectable()
 export class FirebaseService {
   public db: Firestore;
 
   constructor() {
+    // Only initialize once
     if (!getApps().length) {
       const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
       if (!raw) {
-        throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set');
+        throw new Error(
+          'FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set'
+        );
       }
 
       let serviceAccount: ServiceAccount;
       try {
+        // Parse the JSON string (will restore real newlines)
         serviceAccount = JSON.parse(raw);
       } catch (err) {
         throw new Error(
-          'Invalid JSON in FIREBASE_SERVICE_ACCOUNT_JSON: ' + (err as Error).message,
+          'Invalid JSON in FIREBASE_SERVICE_ACCOUNT_JSON: ' +
+            (err as Error).message
         );
       }
 
@@ -35,11 +45,12 @@ export class FirebaseService {
       });
     }
 
+    // Initialize Firestore client
     this.db = getFirestore();
     try {
       this.db.settings({ ignoreUndefinedProperties: true });
     } catch {
-      // already set
+      // settings already applied
     }
   }
 
@@ -48,7 +59,10 @@ export class FirebaseService {
     docId: string,
     data: WithFieldValue<T>,
   ): Promise<void> {
-    await this.db.collection(collection).doc(docId).set(data, { merge: true });
+    await this.db
+      .collection(collection)
+      .doc(docId)
+      .set(data, { merge: true });
   }
 
   async addDocument<T extends DocumentData>(
