@@ -1,74 +1,40 @@
-name: CI → Build & Deploy
+name: Build & Publish Docker image
 
 on:
   push:
-    branches: [ release ]
-  pull_request:
-    branches: [ release ]
+    branches:
+      - release     # or whatever branch you want to auto-deploy from
 
 jobs:
-  lint_and_build:
-    name: Build & Push Docker image
+  build-and-publish:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - uses: actions/checkout@v3
+      # 1) Grab your code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - uses: docker/setup-buildx-action@v2
+      # 2) Re-create .env
+      - name: Recreate .env from secret
+        run: echo "${{ secrets.DOTENV_FILE }}" > .env
 
-      - uses: docker/login-action@v2
+      # 3) Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & push image
-        uses: docker/build-push-action@v4
+      # 4) Build & push the image
+      - name: Build and push
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/okies-backend:release
             ${{ secrets.DOCKERHUB_USERNAME }}/okies-backend:latest
-
-  deploy_staging:
-    name: Deploy to Staging
-    if: github.ref == 'refs/heads/release'
-    needs: lint_and_build
-    runs-on: ubuntu-latest
-    steps:
-      - name: SSH & pull+run container
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host:     ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USER }}
-          key:      ${{ secrets.STAGING_SSH_KEY }}
-          port:     ${{ secrets.STAGING_SSH_PORT || '22' }}
-          script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/okies-backend:release
-            docker rm -f okies-backend || true
-            docker run -d \
-              --name okies-backend \
-              -p 3000:3000 \
-              --env-file /var/www/okies-backend/.env \
-              ${{ secrets.DOCKERHUB_USERNAME }}/okies-backend:release
-
-  deploy_prod:
-    name: Deploy to Production
-    if: github.ref == 'refs/heads/main'
-    needs: lint_and_build
-    runs-on: ubuntu-latest
-    steps:
-      - name: SSH & pull+run container
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host:     ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key:      ${{ secrets.PROD_SSH_KEY }}
-          port:     ${{ secrets.PROD_SSH_PORT || '22' }}
-          script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/okies-backend:latest
-            docker rm -f okies-backend || true
-            docker run -d \
-              --name okies-backend \
-              -p 3000:3000 \
-              --env-file /var/www/okies-backend/.env \
-              ${{ secrets.DOCKERHUB_USERNAME }}/okies-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/okies-backend:${{ github.sha }}
