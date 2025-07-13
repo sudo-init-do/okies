@@ -1,6 +1,8 @@
-import { Module } from '@nestjs/common';
-import { LiveModule } from './live/live.module';
+// src/app.module.ts
 
+import { Module } from '@nestjs/common';
+
+import { LiveModule } from './live/live.module';
 import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { UserModule } from './user/user.module';
@@ -14,9 +16,9 @@ import { MediaModule } from './media/media.module';
 import { CloudflareModule } from './cloudflare/cloudflare.module';
 import { PaymentsModule } from './payments/payments.module';
 
-import { FollowModule } from './follow/follow.module';  
-import { ReportModule } from './report/report.module';           
-import { AnalyticsModule } from './analytics/analytics.module';  
+import { FollowModule } from './follow/follow.module';
+import { ReportModule } from './report/report.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -35,10 +37,10 @@ import { AppService } from './app.service';
     AdminModule,
     WalletModule,
     PaymentsModule,
-    FollowModule,         
-    ReportModule,        
+    FollowModule,
+    ReportModule,
     AnalyticsModule,
-    LiveModule,      
+    LiveModule,
   ],
   controllers: [AppController],
   providers: [AppService],

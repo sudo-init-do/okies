@@ -1,3 +1,5 @@
+// src/app.controller.ts
+
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 
@@ -5,15 +7,29 @@ import { AppService } from './app.service';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  // existing root endpoint
+  /**
+   * Root endpoint
+   * GET /
+   */
   @Get()
   getHello(): string {
     return this.appService.getHello();
   }
 
-  // new health‐check endpoint
+  /**
+   * Health check endpoint
+   * GET /health
+   */
   @Get('health')
-  health() {
-    return { status: 'ok' };
+  getHealth(): {
+    status: 'ok';
+    uptime: number;
+    timestamp: string;
+  } {
+    return {
+      status: 'ok',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    };
   }
 }
