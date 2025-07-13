@@ -8,42 +8,58 @@ import {
   WithFieldValue,
   DocumentReference,
 } from 'firebase-admin/firestore';
-import { initializeApp, cert } from 'firebase-admin/app';
-
-// 1) Point this path at wherever your JSON lives
-//    e.g. src/config/firebase-service-account.json
-import serviceAccountJson from '../config/firebase-service-account.json';
+import { initializeApp, cert, getApps, ServiceAccount } from 'firebase-admin/app';
 
 @Injectable()
 export class FirebaseService {
   public db: Firestore;
 
   constructor() {
-    // Only initialize once
-    if (!initializeApp.length) { /* never actually used; ignore */ }
-    try {
-      // initializeApp will throw if already initialized, so wrap in try
+    // ─── Initialize Firebase Admin (only once) ─────────────────────────────────
+    if (!getApps().length) {
+      // 1) Grab the raw JSON string out of the env var
+      const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+      if (!raw) {
+        throw new Error(
+          'FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set',
+        );
+      }
+
+      // 2) Parse it into a ServiceAccount object
+      let serviceAccount: ServiceAccount;
+      try {
+        serviceAccount = JSON.parse(raw);
+      } catch (err) {
+        throw new Error(
+          'Invalid JSON in FIREBASE_SERVICE_ACCOUNT_JSON: ' +
+            (err as Error).message,
+        );
+      }
+
+      // 3) Initialize the Admin SDK
       initializeApp({
-        credential: cert(serviceAccountJson as any),
+        credential: cert(serviceAccount),
       });
-    } catch {
-      // already initialized
     }
 
+    // ─── Firestore Client & Settings ───────────────────────────────────────────
     this.db = getFirestore();
-    // optional: ignore undefined fields
+
+    // ignore undefined properties in writes to avoid Firestore errors
     try {
       this.db.settings({ ignoreUndefinedProperties: true });
     } catch {
-      /* no-op */
+      /* settings already applied? safe to ignore */
     }
   }
+
+  // ─── Basic CRUD ─────────────────────────────────────────────────────────────
 
   async setDocument<T extends DocumentData>(
     collection: string,
     docId: string,
     data: WithFieldValue<T>,
-  ) {
+  ): Promise<void> {
     await this.db.collection(collection).doc(docId).set(data, { merge: true });
   }
 
@@ -68,7 +84,7 @@ export class FirebaseService {
     collection: string,
     docId: string,
     data: Partial<WithFieldValue<T>>,
-  ) {
+  ): Promise<void> {
     await this.db.collection(collection).doc(docId).update(data);
   }
 
@@ -79,13 +95,15 @@ export class FirebaseService {
     return this.db.collection(collection).doc(docId) as DocumentReference<T>;
   }
 
+  // ─── Sub-collections ────────────────────────────────────────────────────────
+
   async setSubDocument<T extends DocumentData>(
     collection: string,
     docId: string,
     subcollection: string,
     subId: string,
     data: WithFieldValue<T>,
-  ) {
+  ): Promise<void> {
     await this.db
       .collection(collection)
       .doc(docId)
@@ -99,7 +117,7 @@ export class FirebaseService {
     docId: string,
     subcollection: string,
     subId: string,
-  ) {
+  ): Promise<void> {
     await this.db
       .collection(collection)
       .doc(docId)
