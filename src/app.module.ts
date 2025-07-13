@@ -15,13 +15,12 @@ import { PlunkModule } from './plunk/plunk.module';
 import { MediaModule } from './media/media.module';
 import { CloudflareModule } from './cloudflare/cloudflare.module';
 import { PaymentsModule } from './payments/payments.module';
-
 import { FollowModule } from './follow/follow.module';
 import { ReportModule } from './report/report.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { AppService }    from './app.service';
 
 @Module({
   imports: [
@@ -43,6 +42,6 @@ import { AppService } from './app.service';
     LiveModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers:   [AppService],
 })
 export class AppModule {}
