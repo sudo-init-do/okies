@@ -1,37 +1,51 @@
-# ──────────────── STAGE 1: Build ────────────────
+# ────────────────────────────────────────────
+# 1) BUILD stage
+# ────────────────────────────────────────────
 FROM node:20-alpine AS builder
 
+# Where your code will live inside the container
 WORKDIR /app
 
-# Copy only the manifests, install all deps (dev+prod)
-COPY package.json package-lock.json ./
-# bump npm retry settings
-RUN npm config set fetch-retry-maxtimeout 120000 \
- && npm config set fetch-retries 5 \
- && npm config set fetch-retry-mintimeout 20000 \
- && npm ci
+# Copy package manifests & lockfile first (for caching)
+COPY package*.json ./
 
-# Copy source & compile
-COPY tsconfig*.json ./
-COPY src ./src
+# Install all dependencies (dev + prod)
+RUN npm ci
+
+# Copy everything else
+COPY . .
+
+# Recreate .env so your serviceAccount JSON is available at build time
+# (CI will have already echoed .env into the workspace)
+# If you’re building locally, make sure you have a .env with FIREBASE_SERVICE_ACCOUNT_JSON
+# in the project root.
+COPY .env .env
+
+# Actually build your Nest app
 RUN npm run build
 
-# ──────────────── STAGE 2: Runtime ────────────────
-FROM node:20-alpine
+# ────────────────────────────────────────────
+# 2) RUNTIME stage
+# ────────────────────────────────────────────
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Copy only prod deps
-COPY package.json package-lock.json ./
-# same retry settings, install prod only
-RUN npm config set fetch-retry-maxtimeout 120000 \
- && npm config set fetch-retries 5 \
- && npm config set fetch-retry-mintimeout 20000 \
- && npm install --omit=dev
+# Copy only package.json + lockfile, install PROD deps
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-# Copy compiled output
+# Copy over the compiled code from the builder stage
 COPY --from=builder /app/dist ./dist
 
-EXPOSE 3000
+# Copy any other runtime files you need (e.g. .env if you want env-file support here)
+COPY .env .env
 
+# Use the PORT that Render/Sevalla/Docker will set, default to 3000
+ENV PORT=${PORT:-3000}
+
+# Expose (optional—Render and Sevalla detect this automatically)
+EXPOSE $PORT
+
+# Start your app
 CMD ["node", "dist/main.js"]
