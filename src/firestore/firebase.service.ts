@@ -17,71 +17,57 @@ export class FirebaseService implements OnModuleInit {
   onModuleInit() {
     // ─── Only initialize the Admin SDK once ─────────────────────────────────
     if (!getApps().length) {
-      // 1) Read the Base64 string from env
-      const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
-      if (!b64) {
-        throw new Error(
-          'FIREBASE_SERVICE_ACCOUNT_B64 environment variable is not set',
-        );
+      // 1) Read the JSON blob from env
+      const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+      if (!raw) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON env var is not set');
       }
 
-      // 2) Decode from Base64 to JSON text
-      let jsonText: string;
-      try {
-        jsonText = Buffer.from(b64, 'base64').toString('utf-8');
-      } catch (err) {
-        throw new Error(
-          'Failed to Base64-decode FIREBASE_SERVICE_ACCOUNT_B64: ' +
-            (err as Error).message,
-        );
-      }
-
-      // 3) Parse JSON
+      // 2) Parse it into an object
       let parsed: any;
       try {
-        parsed = JSON.parse(jsonText);
+        parsed = JSON.parse(raw);
       } catch (err) {
         throw new Error(
-          'Invalid JSON in decoded FIREBASE_SERVICE_ACCOUNT_B64: ' +
-            (err as Error).message,
+          'Invalid JSON in FIREBASE_SERVICE_ACCOUNT_JSON: ' +
+            (err as Error).message
         );
       }
 
-      // 4) Map into ServiceAccount shape and un-escape "\n" sequences
+      // 3) Map into ServiceAccount shape, un-escaping "\n"
       const serviceAccount: ServiceAccount = {
         projectId: parsed.project_id,
         clientEmail: parsed.client_email,
         privateKey: parsed.private_key.replace(/\\n/g, '\n'),
       };
 
-      // 5) Initialize the Admin SDK
+      // 4) Initialize the Admin SDK
       initializeApp({
         credential: cert(serviceAccount),
       });
     }
 
-    // ─── Wire up Firestore client & settings ────────────────────────────────
+    // ─── Wire up Firestore & settings ────────────────────────────────────────
     this.db = getFirestore();
     try {
       this.db.settings({ ignoreUndefinedProperties: true });
     } catch {
-      /* ignore if not supported */
+      /* ignore if already applied or not supported */
     }
   }
 
-  // ─── Basic CRUD ──────────────────────────────────────────────────────────
-
+  /** Basic CRUD **/
   async setDocument<T extends DocumentData>(
     collection: string,
     docId: string,
-    data: WithFieldValue<T>,
+    data: WithFieldValue<T>
   ): Promise<void> {
     await this.db.collection(collection).doc(docId).set(data, { merge: true });
   }
 
   async addDocument<T extends DocumentData>(
     collection: string,
-    data: WithFieldValue<T>,
+    data: WithFieldValue<T>
   ): Promise<string> {
     const ref = await this.db.collection(collection).add(data);
     return ref.id;
@@ -89,7 +75,7 @@ export class FirebaseService implements OnModuleInit {
 
   async getDocument<T extends DocumentData>(
     collection: string,
-    docId: string,
+    docId: string
   ): Promise<T | null> {
     if (!docId?.trim()) return null;
     const snap = await this.db.collection(collection).doc(docId).get();
@@ -99,26 +85,25 @@ export class FirebaseService implements OnModuleInit {
   async updateDocument<T extends DocumentData>(
     collection: string,
     docId: string,
-    data: Partial<WithFieldValue<T>>,
+    data: Partial<WithFieldValue<T>>
   ): Promise<void> {
     await this.db.collection(collection).doc(docId).update(data);
   }
 
   getDocumentRef<T = DocumentData>(
     collection: string,
-    docId: string,
+    docId: string
   ): DocumentReference<T> {
     return this.db.collection(collection).doc(docId) as DocumentReference<T>;
   }
 
-  // ─── Sub-collections ─────────────────────────────────────────────────────
-
+  /** Sub-collections **/
   async setSubDocument<T extends DocumentData>(
     collection: string,
     docId: string,
     subcollection: string,
     subId: string,
-    data: WithFieldValue<T>,
+    data: WithFieldValue<T>
   ): Promise<void> {
     await this.db
       .collection(collection)
@@ -132,7 +117,7 @@ export class FirebaseService implements OnModuleInit {
     collection: string,
     docId: string,
     subcollection: string,
-    subId: string,
+    subId: string
   ): Promise<void> {
     await this.db
       .collection(collection)
@@ -145,7 +130,7 @@ export class FirebaseService implements OnModuleInit {
   async queryCollectionByField<T extends DocumentData>(
     collection: string,
     field: string,
-    value: string,
+    value: string
   ): Promise<T[]> {
     const snap = await this.db
       .collection(collection)
