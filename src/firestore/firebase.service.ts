@@ -15,51 +15,61 @@ export class FirebaseService implements OnModuleInit {
   public db!: Firestore;
 
   onModuleInit() {
-    // ─── Only initialize once ──────────────────────────────────────────────
+    // Only initialize the Admin SDK once
     if (!getApps().length) {
-      const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-      if (!raw) {
+      // 1) Read the Base64 string from env
+      const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
+      if (!b64) {
         throw new Error(
-          'FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set',
+          'FIREBASE_SERVICE_ACCOUNT_B64 environment variable is not set',
         );
       }
 
-      // 1) Parse the raw JSON into a plain object
-      let parsed: any;
+      // 2) Decode from Base64 to UTF-8 JSON text
+      let jsonText: string;
       try {
-        parsed = JSON.parse(raw);
+        jsonText = Buffer.from(b64, 'base64').toString('utf-8');
       } catch (err) {
         throw new Error(
-          'Invalid JSON in FIREBASE_SERVICE_ACCOUNT_JSON: ' +
+          'Failed to Base64-decode FIREBASE_SERVICE_ACCOUNT_B64: ' +
             (err as Error).message,
         );
       }
 
-      // 2) Map it into the Firebase ServiceAccount shape
+      // 3) Parse JSON
+      let parsed: any;
+      try {
+        parsed = JSON.parse(jsonText);
+      } catch (err) {
+        throw new Error(
+          'Invalid JSON in decoded FIREBASE_SERVICE_ACCOUNT_B64: ' +
+            (err as Error).message,
+        );
+      }
+
+      // 4) Map into ServiceAccount
       const serviceAccount: ServiceAccount = {
         projectId: parsed.project_id,
         clientEmail: parsed.client_email,
-        // replace literal “\n” with real line breaks:
         privateKey: parsed.private_key.replace(/\\n/g, '\n'),
       };
 
-      // 3) Initialize the Admin SDK
+      // 5) Initialize the Admin SDK
       initializeApp({
         credential: cert(serviceAccount),
       });
     }
 
-    // ─── Wire up Firestore ────────────────────────────────────────────────
+    // Wire up Firestore client
     this.db = getFirestore();
-    // ignore undefined fields on writes
     try {
       this.db.settings({ ignoreUndefinedProperties: true });
     } catch {
-      /* some runtimes don’t support settings, safe to ignore */
+      /* ignore if not supported */
     }
   }
 
-  // ─── Basic CRUD ─────────────────────────────────────────────────────────────
+  /** Basic CRUD **/
 
   async setDocument<T extends DocumentData>(
     collection: string,
@@ -101,7 +111,7 @@ export class FirebaseService implements OnModuleInit {
     return this.db.collection(collection).doc(docId) as DocumentReference<T>;
   }
 
-  // ─── Sub-collections ────────────────────────────────────────────────────────
+  /** Sub-collections **/
 
   async setSubDocument<T extends DocumentData>(
     collection: string,
