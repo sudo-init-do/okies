@@ -17,7 +17,7 @@ export class FirebaseService {
   constructor() {
     // ─── Initialize Firebase Admin (only once) ─────────────────────────────────
     if (!getApps().length) {
-      // 1) Grab the raw JSON string out of the env var
+      // 1) Grab the raw JSON string from the env var
       const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
       if (!raw) {
         throw new Error(
@@ -25,10 +25,13 @@ export class FirebaseService {
         );
       }
 
-      // 2) Parse it into a ServiceAccount object
+      // 2) If your platform escaped newlines as "\\n", restore them
+      const withNewlines = raw.replace(/\\n/g, '\n');
+
+      // 3) Parse it into a ServiceAccount object
       let serviceAccount: ServiceAccount;
       try {
-        serviceAccount = JSON.parse(raw);
+        serviceAccount = JSON.parse(withNewlines);
       } catch (err) {
         throw new Error(
           'Invalid JSON in FIREBASE_SERVICE_ACCOUNT_JSON: ' +
@@ -36,7 +39,7 @@ export class FirebaseService {
         );
       }
 
-      // 3) Initialize the Admin SDK
+      // 4) Initialize the Admin SDK
       initializeApp({
         credential: cert(serviceAccount),
       });
@@ -45,11 +48,11 @@ export class FirebaseService {
     // ─── Firestore Client & Settings ───────────────────────────────────────────
     this.db = getFirestore();
 
-    // ignore undefined properties in writes to avoid Firestore errors
+    // Optional: ignore undefined properties on writes
     try {
       this.db.settings({ ignoreUndefinedProperties: true });
     } catch {
-      /* settings already applied? safe to ignore */
+      /* already set or unsupported, safe to ignore */
     }
   }
 
@@ -95,7 +98,7 @@ export class FirebaseService {
     return this.db.collection(collection).doc(docId) as DocumentReference<T>;
   }
 
-  // ─── Sub-collections ────────────────────────────────────────────────────────
+  // ─── Sub-collections & Queries ─────────────────────────────────────────────
 
   async setSubDocument<T extends DocumentData>(
     collection: string,
