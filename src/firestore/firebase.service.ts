@@ -1,6 +1,6 @@
 // src/firestore/firebase.service.ts
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import {
   getFirestore,
   Firestore,
@@ -11,13 +11,12 @@ import {
 import { initializeApp, cert, getApps, ServiceAccount } from 'firebase-admin/app';
 
 @Injectable()
-export class FirebaseService {
-  public db: Firestore;
+export class FirebaseService implements OnModuleInit {
+  public db!: Firestore;
 
-  constructor() {
-    // ─── Initialize Firebase Admin (only once) ─────────────────────────────────
+  onModuleInit() {
+    // ─── Only initialize once ──────────────────────────────────────────────
     if (!getApps().length) {
-      // 1) Grab the raw JSON string from the env var
       const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
       if (!raw) {
         throw new Error(
@@ -25,13 +24,10 @@ export class FirebaseService {
         );
       }
 
-      // 2) If your platform escaped newlines as "\\n", restore them
-      const withNewlines = raw.replace(/\\n/g, '\n');
-
-      // 3) Parse it into a ServiceAccount object
-      let serviceAccount: ServiceAccount;
+      // 1) Parse the raw JSON into a plain object
+      let parsed: any;
       try {
-        serviceAccount = JSON.parse(withNewlines);
+        parsed = JSON.parse(raw);
       } catch (err) {
         throw new Error(
           'Invalid JSON in FIREBASE_SERVICE_ACCOUNT_JSON: ' +
@@ -39,20 +35,27 @@ export class FirebaseService {
         );
       }
 
-      // 4) Initialize the Admin SDK
+      // 2) Map it into the Firebase ServiceAccount shape
+      const serviceAccount: ServiceAccount = {
+        projectId: parsed.project_id,
+        clientEmail: parsed.client_email,
+        // replace literal “\n” with real line breaks:
+        privateKey: parsed.private_key.replace(/\\n/g, '\n'),
+      };
+
+      // 3) Initialize the Admin SDK
       initializeApp({
         credential: cert(serviceAccount),
       });
     }
 
-    // ─── Firestore Client & Settings ───────────────────────────────────────────
+    // ─── Wire up Firestore ────────────────────────────────────────────────
     this.db = getFirestore();
-
-    // Optional: ignore undefined properties on writes
+    // ignore undefined fields on writes
     try {
       this.db.settings({ ignoreUndefinedProperties: true });
     } catch {
-      /* already set or unsupported, safe to ignore */
+      /* some runtimes don’t support settings, safe to ignore */
     }
   }
 
@@ -98,7 +101,7 @@ export class FirebaseService {
     return this.db.collection(collection).doc(docId) as DocumentReference<T>;
   }
 
-  // ─── Sub-collections & Queries ─────────────────────────────────────────────
+  // ─── Sub-collections ────────────────────────────────────────────────────────
 
   async setSubDocument<T extends DocumentData>(
     collection: string,
