@@ -15,7 +15,7 @@ export class FirebaseService implements OnModuleInit {
   public db!: Firestore;
 
   onModuleInit() {
-    // Only initialize the Admin SDK once
+    // ─── Only initialize the Admin SDK once ─────────────────────────────────
     if (!getApps().length) {
       // 1) Read the Base64 string from env
       const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
@@ -25,7 +25,7 @@ export class FirebaseService implements OnModuleInit {
         );
       }
 
-      // 2) Decode from Base64 to UTF-8 JSON text
+      // 2) Decode from Base64 to JSON text
       let jsonText: string;
       try {
         jsonText = Buffer.from(b64, 'base64').toString('utf-8');
@@ -47,7 +47,7 @@ export class FirebaseService implements OnModuleInit {
         );
       }
 
-      // 4) Map into ServiceAccount
+      // 4) Map into ServiceAccount shape and un-escape "\n" sequences
       const serviceAccount: ServiceAccount = {
         projectId: parsed.project_id,
         clientEmail: parsed.client_email,
@@ -60,7 +60,7 @@ export class FirebaseService implements OnModuleInit {
       });
     }
 
-    // Wire up Firestore client
+    // ─── Wire up Firestore client & settings ────────────────────────────────
     this.db = getFirestore();
     try {
       this.db.settings({ ignoreUndefinedProperties: true });
@@ -69,7 +69,7 @@ export class FirebaseService implements OnModuleInit {
     }
   }
 
-  /** Basic CRUD **/
+  // ─── Basic CRUD ──────────────────────────────────────────────────────────
 
   async setDocument<T extends DocumentData>(
     collection: string,
@@ -111,7 +111,7 @@ export class FirebaseService implements OnModuleInit {
     return this.db.collection(collection).doc(docId) as DocumentReference<T>;
   }
 
-  /** Sub-collections **/
+  // ─── Sub-collections ─────────────────────────────────────────────────────
 
   async setSubDocument<T extends DocumentData>(
     collection: string,
