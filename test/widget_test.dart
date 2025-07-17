@@ -1,30 +1,34 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:network_image_mock/network_image_mock.dart';
 
-import 'package:okies_frontend/main.dart';
+import 'package:okies_frontend/widgets/login_dialog.dart';
+import 'package:okies_frontend/screens/home_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('tapping like shows login dialog', (WidgetTester tester) async {
+    // Stub out all NetworkImage calls to avoid real HTTP errors:
+    await mockNetworkImagesFor(() async {
+      // Build only the HomePage (skip splash)
+      await tester.pumpWidget(
+        const MaterialApp(home: HomePage()),
+      );
+      await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      // Find & tap the first heart icon
+      final likeButton = find.byIcon(Icons.favorite_border).first;
+      expect(likeButton, findsOneWidget);
+      await tester.tap(likeButton);
+      await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      // Verify the LoginDialog is shown
+      expect(find.text('Login'), findsOneWidget);
+      expect(find.text('Continue'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      // Dismiss by tapping the close‐icon
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+      expect(find.byType(LoginDialog), findsNothing);
+    });
   });
 }
