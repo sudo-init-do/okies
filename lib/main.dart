@@ -5,7 +5,8 @@ import 'screens/otp_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/verify_otp_screen.dart';
-import 'screens/onboarding_interests_screen.dart'; // <-- Make sure this file exists
+import 'screens/onboarding_interests_screen.dart';
+import 'screens/setup_profile_screen.dart'; // <-- Added import
 
 void main() => runApp(const MyApp());
 
@@ -28,7 +29,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/reset-password': (context) => const ResetPasswordScreen(),
         '/verify-reset-otp': (context) => const VerifyOtpScreen(),
-        '/onboarding-interests': (context) => const OnboardingInterestsScreen(), // ✅ Added this line
+        '/onboarding-interests': (context) => const OnboardingInterestsScreen(),
+        '/setup-profile': (context) => const SetupProfileScreen(), // <-- Added route
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/otp') {

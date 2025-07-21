@@ -128,9 +128,9 @@ class _OnboardingInterestsScreenState extends State<OnboardingInterestsScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: selectedInterests.isNotEmpty ? () {
-                    // TODO: Implement next step
-                  } : null,
+                  onPressed: selectedInterests.isNotEmpty
+                      ? () => Navigator.pushNamed(context, '/setup-profile')
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF16A34A),
                     foregroundColor: Colors.white,
