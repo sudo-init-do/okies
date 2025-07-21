@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
+import 'screens/signup_screen.dart';
+import 'screens/otp_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/reset_password_screen.dart';
+import 'screens/verify_otp_screen.dart';
+import 'screens/onboarding_interests_screen.dart'; // <-- Make sure this file exists
 
 void main() => runApp(const MyApp());
 
@@ -13,9 +19,26 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
         scaffoldBackgroundColor: Colors.white,
-        brightness: Brightness.dark,
+        brightness: Brightness.light,
       ),
-      home: const SplashScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/signup': (context) => const SignupScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/reset-password': (context) => const ResetPasswordScreen(),
+        '/verify-reset-otp': (context) => const VerifyOtpScreen(),
+        '/onboarding-interests': (context) => const OnboardingInterestsScreen(), // ✅ Added this line
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/otp') {
+          final contact = settings.arguments as String?;
+          return MaterialPageRoute(
+            builder: (_) => OtpScreen(contact: contact ?? ''),
+          );
+        }
+        return null;
+      },
     );
   }
 }
