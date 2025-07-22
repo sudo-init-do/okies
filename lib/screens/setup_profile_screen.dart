@@ -55,7 +55,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                     child: Container(
                       width: 26,
                       height: 26,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
                       ),
@@ -84,7 +84,7 @@ class _SetupProfileScreenState extends State<SetupProfileScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // TODO: Proceed to next screen
+                    Navigator.pushReplacementNamed(context, '/home');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF16A34A),
