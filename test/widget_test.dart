@@ -9,9 +9,9 @@ void main() {
   testWidgets('tapping like shows login dialog', (WidgetTester tester) async {
     // Stub out all NetworkImage calls to avoid real HTTP errors:
     await mockNetworkImagesFor(() async {
-      // Build only the HomePage (skip splash)
+      // Build only the HomeScreen (skip splash)
       await tester.pumpWidget(
-        const MaterialApp(home: HomePage()),
+        MaterialApp(home: HomeScreen()),
       );
       await tester.pumpAndSettle();
 
@@ -25,7 +25,7 @@ void main() {
       expect(find.text('Login'), findsOneWidget);
       expect(find.text('Continue'), findsOneWidget);
 
-      // Dismiss by tapping the close‐icon
+      // Dismiss by tapping the close icon
       await tester.tap(find.byIcon(Icons.close));
       await tester.pumpAndSettle();
       expect(find.byType(LoginDialog), findsNothing);
