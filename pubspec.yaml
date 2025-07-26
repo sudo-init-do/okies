@@ -25,6 +25,7 @@ flutter:
 
   assets:
     - assets/images/Okies.png
+    - assets/images/OkiesHome.png
     - assets/images/google_logo.png
     - assets/images/apple_logo.png
     - assets/images/splash_logo.png
