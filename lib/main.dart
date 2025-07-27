@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'screens/content_upload_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/otp_screen.dart';
@@ -7,7 +8,8 @@ import 'screens/reset_password_screen.dart';
 import 'screens/verify_otp_screen.dart';
 import 'screens/onboarding_interests_screen.dart';
 import 'screens/setup_profile_screen.dart';
-import 'screens/home_screen.dart'; 
+import 'screens/home_screen.dart';
+import 'screens/search_screen.dart';
 
 void main() => runApp(const MyApp());
 
@@ -33,7 +35,9 @@ class MyApp extends StatelessWidget {
         '/verify-reset-otp': (context) => const VerifyOtpScreen(),
         '/onboarding-interests': (context) => const OnboardingInterestsScreen(),
         '/setup-profile': (context) => const SetupProfileScreen(),
-        '/home': (context) => HomeScreen(), 
+        '/home': (context) => HomeScreen(),
+        '/upload': (context) => const ContentUploadScreen(),
+        '/search': (context) => const SearchScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/otp') {

@@ -209,7 +209,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             children: [
               IconButton(
                 icon: const Icon(Icons.search, color: Colors.black, size: 24),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, '/search');
+                },
                 splashRadius: 20,
               ),
               const SizedBox(width: 4),
@@ -759,7 +761,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // Handle add button tap
+            Navigator.pushNamed(context, '/upload');
           },
           borderRadius: BorderRadius.circular(28),
           child: const Icon(
