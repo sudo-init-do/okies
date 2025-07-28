@@ -791,8 +791,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               children: [
                 _buildNavItem(Icons.home_outlined, Icons.home, 0),
                 const SizedBox(width: 32),
-                _buildNavItem(
-                    Icons.video_library_outlined, Icons.video_library, 1),
+                _buildNavItem(Icons.videocam_outlined, Icons.videocam, 1),
               ],
             ),
 
@@ -818,6 +817,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         setState(() {
           _selectedIndex = index;
         });
+
+        // Handle navigation based on index
+        if (index == 1) {
+          Navigator.pushNamed(context, '/live');
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(8),

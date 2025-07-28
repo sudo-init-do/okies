@@ -9,7 +9,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   int _selectedTabIndex = 0;
-  
+
   final List<String> categories = [
     'Fashion & Style',
     'Traveling',
@@ -122,7 +122,7 @@ class _SearchScreenState extends State<SearchScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              
+
               // Search Bar
               Container(
                 decoration: BoxDecoration(
@@ -201,12 +201,12 @@ class _SearchScreenState extends State<SearchScreen> {
                           Text(
                             tabs[index],
                             style: TextStyle(
-                              color: isSelected 
-                                  ? const Color(0xFF00C569) 
+                              color: isSelected
+                                  ? const Color(0xFF00C569)
                                   : Colors.grey[600],
                               fontSize: 16,
-                              fontWeight: isSelected 
-                                  ? FontWeight.w600 
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
                                   : FontWeight.w500,
                             ),
                           ),
@@ -336,75 +336,87 @@ class _SearchScreenState extends State<SearchScreen> {
                 itemCount: trendingPhotos.length,
                 itemBuilder: (context, index) {
                   final photo = trendingPhotos[index];
-                  return Stack(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          image: DecorationImage(
-                            image: NetworkImage(photo['image']),
-                            fit: BoxFit.cover,
+                  return GestureDetector(
+                    onTap: () {
+                      // Navigate to post detail screen when Thompson's post is tapped
+                      if (photo['username'] == 'Thompson') {
+                        Navigator.pushNamed(
+                          context,
+                          '/post-detail',
+                          arguments: photo,
+                        );
+                      }
+                    },
+                    child: Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            image: DecorationImage(
+                              image: NetworkImage(photo['image']),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.7),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 12,
+                          left: 12,
+                          right: 12,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          photo['username'],
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        if (photo['hasBlueCheck'] == true) ...[
+                                          const SizedBox(width: 4),
+                                          const Icon(
+                                            Icons.verified,
+                                            color: Color(0xFF1DA1F2),
+                                            size: 16,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      photo['timeAgo'],
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                      ),
-                      Positioned(
-                        bottom: 12,
-                        left: 12,
-                        right: 12,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        photo['username'],
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      if (photo['hasBlueCheck'] == true) ...[
-                                        const SizedBox(width: 4),
-                                        const Icon(
-                                          Icons.verified,
-                                          color: Color(0xFF1DA1F2),
-                                          size: 16,
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    photo['timeAgo'],
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 },
               ),
