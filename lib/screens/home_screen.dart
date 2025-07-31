@@ -265,78 +265,86 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           return Container(
             margin: const EdgeInsets.only(right: 16),
             width: 70,
-            child: Column(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: story['isAddStory'] == true
-                        ? null
-                        : story['hasNewStory'] == true
-                            ? const LinearGradient(
-                                colors: [
-                                  Color(0xFFE1306C),
-                                  Color(0xFFFD1D1D),
-                                  Color(0xFFF77737)
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              )
-                            : null,
-                    border: story['isAddStory'] == true
-                        ? Border.all(color: Colors.grey[300]!, width: 2)
-                        : story['hasNewStory'] == false
-                            ? Border.all(color: Colors.grey[300]!, width: 2)
-                            : null,
-                  ),
-                  child: Container(
-                    margin: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
+            child: GestureDetector(
+              onTap: () {
+                if (story['isAddStory'] == true) {
+                  Navigator.pushNamed(context, '/story-creation');
+                }
+                // Handle other story taps here if needed
+              },
+              child: Column(
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      gradient: story['isAddStory'] == true
+                          ? null
+                          : story['hasNewStory'] == true
+                              ? const LinearGradient(
+                                  colors: [
+                                    Color(0xFFE1306C),
+                                    Color(0xFFFD1D1D),
+                                    Color(0xFFF77737)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
+                              : null,
+                      border: story['isAddStory'] == true
+                          ? Border.all(color: Colors.grey[300]!, width: 2)
+                          : story['hasNewStory'] == false
+                              ? Border.all(color: Colors.grey[300]!, width: 2)
+                              : null,
                     ),
                     child: Container(
                       margin: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        image: story['isAddStory'] != true
-                            ? DecorationImage(
-                                image: NetworkImage(story['image']),
-                                fit: BoxFit.cover,
+                        color: Colors.white,
+                      ),
+                      child: Container(
+                        margin: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: story['isAddStory'] != true
+                              ? DecorationImage(
+                                  image: NetworkImage(story['image']),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: story['isAddStory'] == true
+                            ? Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.grey[100],
+                                ),
+                                child: const Icon(
+                                  Icons.add,
+                                  color: Colors.grey,
+                                  size: 24,
+                                ),
                               )
                             : null,
                       ),
-                      child: story['isAddStory'] == true
-                          ? Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.grey[100],
-                              ),
-                              child: const Icon(
-                                Icons.add,
-                                color: Colors.grey,
-                                size: 24,
-                              ),
-                            )
-                          : null,
                     ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  story['name'],
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black87,
+                  const SizedBox(height: 6),
+                  Text(
+                    story['name'],
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -821,6 +829,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         // Handle navigation based on index
         if (index == 1) {
           Navigator.pushNamed(context, '/live');
+        } else if (index == 3) {
+          Navigator.pushNamed(context, '/gift');
         }
       },
       child: Container(

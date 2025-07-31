@@ -16,6 +16,8 @@ import 'screens/audience_screen.dart';
 import 'screens/following_screen.dart';
 import 'screens/live_screen.dart';
 import 'screens/live_streaming_screen.dart';
+import 'screens/story_creation_screen.dart';
+import 'screens/gift_screen.dart';
 
 void main() => runApp(const MyApp());
 
@@ -48,6 +50,8 @@ class MyApp extends StatelessWidget {
         '/following': (context) => const FollowingScreen(),
         '/live': (context) => const LiveScreen(),
         '/live-streaming': (context) => const LiveStreamingScreen(),
+        '/story-creation': (context) => const StoryCreationScreen(),
+        '/gift': (context) => const GiftScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/otp') {
