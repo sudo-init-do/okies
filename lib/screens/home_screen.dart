@@ -453,65 +453,77 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // User Info Row
-                Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/profile', arguments: {
+                      'profile': {
+                        'userName': post['userName'],
+                        'userImage': post['userImage'],
+                        'isVerified': post['isVerified'],
+                      },
+                      'isOwnProfile': false, // This is a public profile view
+                    });
+                  },
+                  child: Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundImage: NetworkImage(post['userImage']),
+                        ),
                       ),
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundImage: NetworkImage(post['userImage']),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Text(
-                            post['userName'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black,
-                                  offset: Offset(0, 1),
-                                  blurRadius: 2,
-                                ),
-                              ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Text(
+                              post['userName'],
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black,
+                                    offset: Offset(0, 1),
+                                    blurRadius: 2,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          if (post['isVerified'] == true) ...[
-                            const SizedBox(width: 6),
-                            const Icon(
-                              Icons.verified,
-                              color: Color(0xFF1DA1F2),
-                              size: 16,
+                            if (post['isVerified'] == true) ...[
+                              const SizedBox(width: 6),
+                              const Icon(
+                                Icons.verified,
+                                color: Color(0xFF1DA1F2),
+                                size: 16,
+                              ),
+                            ],
+                            const SizedBox(width: 12),
+                            Text(
+                              post['timeAgo'],
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.5),
+                                    offset: const Offset(0, 1),
+                                    blurRadius: 2,
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
-                          const SizedBox(width: 12),
-                          Text(
-                            post['timeAgo'],
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.5),
-                                  offset: const Offset(0, 1),
-                                  blurRadius: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -831,6 +843,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           Navigator.pushNamed(context, '/live');
         } else if (index == 3) {
           Navigator.pushNamed(context, '/gift');
+        } else if (index == 4) {
+          Navigator.pushNamed(context, '/profile', arguments: {
+            'profile': {
+              'userName': 'Kelly Jnr.',
+              'userImage': 'https://picsum.photos/120/120?random=1',
+              'isVerified': true,
+            },
+            'isOwnProfile': true,
+          });
         }
       },
       child: Container(

@@ -18,6 +18,7 @@ import 'screens/live_screen.dart';
 import 'screens/live_streaming_screen.dart';
 import 'screens/story_creation_screen.dart';
 import 'screens/gift_screen.dart';
+import 'screens/earnings_dashboard_screen.dart';
 
 void main() => runApp(const MyApp());
 
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
         '/live-streaming': (context) => const LiveStreamingScreen(),
         '/story-creation': (context) => const StoryCreationScreen(),
         '/gift': (context) => const GiftScreen(),
+        '/earnings': (context) => const EarningsDashboardScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/otp') {
@@ -65,9 +67,12 @@ class MyApp extends StatelessWidget {
             builder: (_) => PostDetailScreen(post: post ?? {}),
           );
         } else if (settings.name == '/profile') {
-          final profile = settings.arguments as Map<String, dynamic>?;
+          final args = settings.arguments as Map<String, dynamic>?;
+          final profile = args?['profile'] as Map<String, dynamic>? ?? {};
+          final isOwnProfile = args?['isOwnProfile'] as bool? ?? false;
           return MaterialPageRoute(
-            builder: (_) => ProfileScreen(profile: profile ?? {}),
+            builder: (_) =>
+                ProfileScreen(profile: profile, isOwnProfile: isOwnProfile),
           );
         }
         return null;

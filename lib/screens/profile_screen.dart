@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatefulWidget {
   final Map<String, dynamic> profile;
+  final bool
+      isOwnProfile; // New parameter to determine if this is user's own profile
 
-  const ProfileScreen({super.key, required this.profile});
+  const ProfileScreen(
+      {super.key, required this.profile, this.isOwnProfile = false});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -97,10 +100,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         titleSpacing: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {},
-          ),
+          if (widget.isOwnProfile)
+            IconButton(
+              icon: const Icon(Icons.settings, color: Colors.black),
+              onPressed: () {},
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.more_vert, color: Colors.black),
+              onPressed: () {},
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -130,19 +139,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     height: 60,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.red, width: 2),
+                      border: Border.all(color: Colors.grey.shade300, width: 1),
                     ),
-                    child: const CircleAvatar(
+                    child: CircleAvatar(
                       radius: 28,
-                      backgroundColor: Colors.red,
-                      child: Text(
-                        '中',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      backgroundImage: NetworkImage(
+                          widget.profile['userImage'] ??
+                              'https://picsum.photos/120/120?random=1'),
+                      backgroundColor: Colors.grey,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -152,58 +156,90 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Row(
                           children: [
-                            const Text(
-                              'China Republic',
-                              style: TextStyle(
+                            Text(
+                              widget.profile['userName'] ?? 'Kelly Jnr.',
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 18,
                                 color: Colors.black,
                               ),
                             ),
                             const SizedBox(width: 6),
-                            const Icon(
-                              Icons.verified,
-                              color: Color(0xFF1DA1F2),
-                              size: 18,
-                            ),
+                            if (widget.profile['isVerified'] == true ||
+                                widget.isOwnProfile)
+                              const Icon(
+                                Icons.verified,
+                                color: Color(0xFF1DA1F2),
+                                size: 18,
+                              ),
                           ],
                         ),
+                        if (!widget.isOwnProfile) ...[
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Digital Creator & Entrepreneur',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00C569),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'Follow',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                            if (widget.isOwnProfile)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 6),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Edit Profile',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              )
+                            else ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF00C569),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Follow',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 6),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey[300]!),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'Message',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                              const SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 6),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Chat',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ],
@@ -216,17 +252,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
 
             // Bio Section
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'China News 247 Updates/ Logistics and CO.',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
+            if (widget.isOwnProfile) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Digital Creator & Entrepreneur',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
                 ),
               ),
-            ),
+            ],
 
             const SizedBox(height: 6),
 
@@ -242,31 +280,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     const TextSpan(
                       text:
-                          'Delivering fast, accurate, and unbiased news from around the world. ',
+                          'Passionate about Creating meaningful digital experience. Building the future of social commerce. Based in San Francisco. ',
                     ),
                     WidgetSpan(
                       child: Container(
                         width: 14,
                         height: 14,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF1DA1F2),
+                          color: Colors.black,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.check,
+                          Icons.language,
                           color: Colors.white,
                           size: 8,
                         ),
                       ),
-                    ),
-                    const TextSpan(
-                      text:
-                          '\nStay informed with breaking headlines, in-depth reports, and real-time updates.\nPolitics | Business | Tech | Health | World | More\n',
-                    ),
-                    const TextSpan(
-                      text:
-                          '📍 Global | 🕐 24/7 Coverage | 📺 Your trusted source for news.',
-                      style: TextStyle(color: Colors.black87),
                     ),
                   ],
                 ),
@@ -302,6 +331,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
+                  if (widget.isOwnProfile)
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(context, '/earnings');
+                        },
+                        child: Column(
+                          children: [
+                            const Text(
+                              '₦15.2K',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Earnings',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   Expanded(
                     child: GestureDetector(
                       onTap: () {

@@ -75,55 +75,59 @@ class _GiftScreenState extends State<GiftScreen> {
             margin: const EdgeInsets.all(8),
             child: const Row(
               children: [
-                SizedBox(width: 8),
+                SizedBox(width: 4),
                 Icon(
                   Icons.arrow_back_ios,
                   color: Colors.black87,
-                  size: 20,
+                  size: 18,
                 ),
-                SizedBox(width: 4),
-                Text(
-                  'Back',
-                  style: TextStyle(
-                    color: Colors.black87,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
+                SizedBox(width: 2),
+                Flexible(
+                  child: Text(
+                    'Back',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
           ),
         ),
-        leadingWidth: 80,
+        leadingWidth: 75,
         actions: [
           Container(
-            margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+            margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
                   'Bal: ',
                   style: TextStyle(
                     color: Colors.grey,
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
                 const Text(
                   '💰',
-                  style: TextStyle(fontSize: 14),
+                  style: TextStyle(fontSize: 12),
                 ),
                 const Text(
                   '13.8k',
                   style: TextStyle(
                     color: Colors.black87,
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: const Color(0xFF4CAF50),
                     borderRadius: BorderRadius.circular(6),
@@ -132,7 +136,7 @@ class _GiftScreenState extends State<GiftScreen> {
                     'Top Up',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -147,19 +151,20 @@ class _GiftScreenState extends State<GiftScreen> {
         children: [
           // Title and subtitle
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Gift',
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
                     color: Colors.black87,
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 const Text(
                   'Select a gift you want to buy',
                   style: TextStyle(
@@ -168,25 +173,26 @@ class _GiftScreenState extends State<GiftScreen> {
                     color: Colors.grey,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
                 // Search bar
                 Container(
+                  height: 48,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: Colors.grey[300]!, width: 1),
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.grey[200]!, width: 1),
                   ),
                   child: const Row(
                     children: [
                       Icon(
                         Icons.search,
                         color: Colors.grey,
-                        size: 20,
+                        size: 22,
                       ),
-                      SizedBox(width: 12),
+                      SizedBox(width: 14),
                       Expanded(
                         child: Text(
                           'Find gift',
@@ -214,9 +220,9 @@ class _GiftScreenState extends State<GiftScreen> {
                 padding: const EdgeInsets.only(bottom: 16),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
-                  childAspectRatio: 0.95,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.0,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 10,
                 ),
                 itemCount: gifts.length,
                 itemBuilder: (context, index) {
@@ -229,59 +235,82 @@ class _GiftScreenState extends State<GiftScreen> {
                         selectedGiftIndex = index;
                       });
                     },
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
                       decoration: BoxDecoration(
                         color: gift['color'],
                         borderRadius: BorderRadius.circular(12),
                         border: isSelected
                             ? Border.all(
                                 color: const Color(0xFF4CAF50), width: 2)
-                            : Border.all(color: Colors.grey[300]!, width: 1),
+                            : Border.all(color: Colors.grey[200]!, width: 1),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFF4CAF50).withOpacity(0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 6, horizontal: 4),
+                        padding: const EdgeInsets.all(4),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              gift['emoji'],
-                              style: const TextStyle(fontSize: 26),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              gift['name'],
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
+                            Flexible(
+                              child: Text(
+                                gift['emoji'],
+                                style: const TextStyle(fontSize: 24),
                               ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
                             ),
                             const SizedBox(height: 2),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text(
-                                  '💰',
-                                  style: TextStyle(fontSize: 8),
+                            Flexible(
+                              child: Text(
+                                gift['name'],
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
                                 ),
-                                Flexible(
-                                  child: Text(
-                                    '${gift['price']}',
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Flexible(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    '💰',
+                                    style: TextStyle(fontSize: 7),
                                   ),
-                                ),
-                              ],
+                                  Flexible(
+                                    child: Text(
+                                      '${gift['price']}',
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.black87,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -297,57 +326,73 @@ class _GiftScreenState extends State<GiftScreen> {
       bottomNavigationBar: Container(
         color: Colors.white,
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
             child: Row(
               children: [
                 // Selected gift display
-                Flexible(
-                  flex: 2,
+                Expanded(
+                  flex: 3,
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(25),
-                      border: Border.all(color: Colors.grey[300]!, width: 1),
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.grey[200]!, width: 1),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           gifts[selectedGiftIndex]['emoji'],
-                          style: const TextStyle(fontSize: 20),
+                          style: const TextStyle(fontSize: 24),
                         ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            gifts[selectedGiftIndex]['name'],
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              '💰',
-                              style: TextStyle(fontSize: 10),
-                            ),
-                            Text(
-                              '${gifts[selectedGiftIndex]['price']}',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                gifts[selectedGiftIndex]['name'],
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    '💰',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    '${gifts[selectedGiftIndex]['price']}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -359,8 +404,9 @@ class _GiftScreenState extends State<GiftScreen> {
                 // Quantity controls
                 Container(
                   decoration: BoxDecoration(
+                    color: Colors.white,
                     border: Border.all(color: Colors.grey[300]!, width: 1),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -374,22 +420,23 @@ class _GiftScreenState extends State<GiftScreen> {
                           }
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           child: const Icon(
                             Icons.remove,
-                            size: 18,
+                            size: 20,
                             color: Colors.black54,
                           ),
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                            horizontal: 8, vertical: 8),
                         child: Text(
                           '$giftQuantity',
                           style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
                             color: Colors.black87,
                           ),
                         ),
@@ -401,10 +448,11 @@ class _GiftScreenState extends State<GiftScreen> {
                           });
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           child: const Icon(
                             Icons.add,
-                            size: 18,
+                            size: 20,
                             color: Colors.black54,
                           ),
                         ),
@@ -416,26 +464,41 @@ class _GiftScreenState extends State<GiftScreen> {
                 const SizedBox(width: 12),
 
                 // Send Gift button
-                Flexible(
-                  flex: 1,
+                Expanded(
+                  flex: 2,
                   child: GestureDetector(
                     onTap: () {
                       // Handle send gift action
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              'Sending ${gifts[selectedGiftIndex]['name']} x$giftQuantity'),
+                          backgroundColor: const Color(0xFF4CAF50),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
                         color: const Color(0xFF4CAF50),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF4CAF50).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: const Text(
                         'Send\nGift',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          height: 1.2,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          height: 1.1,
                         ),
                       ),
                     ),
