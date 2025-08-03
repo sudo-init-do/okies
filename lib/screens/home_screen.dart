@@ -239,9 +239,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
               const SizedBox(width: 4),
               IconButton(
-                icon: const Icon(Icons.send_outlined,
+                icon: const Icon(Icons.chat_bubble_outline,
                     color: Colors.black, size: 24),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, '/messages');
+                },
                 splashRadius: 20,
               ),
             ],

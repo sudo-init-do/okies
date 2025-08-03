@@ -19,6 +19,7 @@ import 'screens/live_streaming_screen.dart';
 import 'screens/story_creation_screen.dart';
 import 'screens/gift_screen.dart';
 import 'screens/earnings_dashboard_screen.dart';
+import 'screens/messages_screen.dart';
 
 void main() => runApp(const MyApp());
 
@@ -54,6 +55,7 @@ class MyApp extends StatelessWidget {
         '/story-creation': (context) => const StoryCreationScreen(),
         '/gift': (context) => const GiftScreen(),
         '/earnings': (context) => const EarningsDashboardScreen(),
+        '/messages': (context) => const MessagesScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/otp') {
