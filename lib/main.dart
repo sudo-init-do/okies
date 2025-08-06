@@ -22,6 +22,14 @@ import 'screens/earnings_dashboard_screen.dart';
 import 'screens/messages_screen.dart';
 import 'screens/chat_conversation_screen.dart';
 import 'screens/voice_call_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/privacy_security_screen.dart';
+import 'screens/my_wallet_screen.dart';
+import 'screens/notifications_screen.dart';
+import 'screens/privacy_policy_screen.dart';
+import 'screens/terms_conditions_screen.dart';
+import 'screens/help_support_screen.dart';
+import 'screens/language_screen.dart';
 
 void main() => runApp(const MyApp());
 
@@ -58,6 +66,14 @@ class MyApp extends StatelessWidget {
         '/gift': (context) => const GiftScreen(),
         '/earnings': (context) => const EarningsDashboardScreen(),
         '/messages': (context) => const MessagesScreen(),
+        '/settings': (context) => const SettingsScreen(),
+        '/privacy-security': (context) => const PrivacySecurityScreen(),
+        '/my-wallet': (context) => const MyWalletScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
+        '/privacy-policy': (context) => const PrivacyPolicyScreen(),
+        '/terms-conditions': (context) => const TermsConditionsScreen(),
+        '/help-support': (context) => const HelpSupportScreen(),
+        '/language': (context) => const LanguageScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/otp') {

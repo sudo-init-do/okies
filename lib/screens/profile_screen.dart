@@ -103,7 +103,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (widget.isOwnProfile)
             IconButton(
               icon: const Icon(Icons.settings, color: Colors.black),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushNamed(context, '/settings');
+              },
             )
           else
             IconButton(
