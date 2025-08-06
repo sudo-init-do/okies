@@ -20,6 +20,8 @@ import 'screens/story_creation_screen.dart';
 import 'screens/gift_screen.dart';
 import 'screens/earnings_dashboard_screen.dart';
 import 'screens/messages_screen.dart';
+import 'screens/chat_conversation_screen.dart';
+import 'screens/voice_call_screen.dart';
 
 void main() => runApp(const MyApp());
 
@@ -75,6 +77,29 @@ class MyApp extends StatelessWidget {
           return MaterialPageRoute(
             builder: (_) =>
                 ProfileScreen(profile: profile, isOwnProfile: isOwnProfile),
+          );
+        } else if (settings.name == '/chat') {
+          final args = settings.arguments as Map<String, dynamic>?;
+          final contactName = args?['contactName'] as String? ?? 'Unknown';
+          final isOnline = args?['isOnline'] as bool? ?? false;
+          final existingMessages =
+              args?['existingMessages'] as List<Map<String, dynamic>>?;
+          return MaterialPageRoute(
+            builder: (_) => ChatConversationScreen(
+              contactName: contactName,
+              isOnline: isOnline,
+              existingMessages: existingMessages,
+            ),
+          );
+        } else if (settings.name == '/voice-call') {
+          final args = settings.arguments as Map<String, dynamic>?;
+          final contactName = args?['contactName'] as String? ?? 'Unknown';
+          final contactImage = args?['contactImage'] as String?;
+          return MaterialPageRoute(
+            builder: (_) => VoiceCallScreen(
+              contactName: contactName,
+              contactImage: contactImage,
+            ),
           );
         }
         return null;

@@ -87,21 +87,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
     },
   ];
 
-  // Filter conversations based on selected tab
-  List<Map<String, dynamic>> get filteredConversations {
-    switch (selectedTabIndex) {
-      case 0: // All
-        return conversations;
-      case 1: // Unread
-        return conversations.where((conv) => conv['unreadCount'] > 0).toList();
-      case 2: // Groups
-        // For now, return empty list. You can add group filtering logic later
-        return [];
-      default:
-        return conversations;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,8 +127,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
           // Tabs bar
           _TabsBar(
             selectedIndex: selectedTabIndex,
-            unreadCount:
-                conversations.where((conv) => conv['unreadCount'] > 0).length,
             onTabSelected: (index) {
               setState(() {
                 selectedTabIndex = index;
@@ -153,31 +136,29 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
           // Chat list
           Expanded(
-            child: filteredConversations.isEmpty
-                ? _buildEmptyState()
-                : ListView.separated(
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: filteredConversations.length,
-                    separatorBuilder: (context, index) {
-                      return Container(
-                        margin: const EdgeInsets.only(left: kInsetDividerLeft),
-                        height: 1,
-                        color: kDivider,
-                      );
-                    },
-                    itemBuilder: (context, index) {
-                      final conversation = filteredConversations[index];
-                      return ChatListItem(
-                        name: conversation['name'],
-                        message: conversation['message'],
-                        time: conversation['time'],
-                        isOnline: conversation['isOnline'],
-                        unreadCount: conversation['unreadCount'],
-                        isRead: conversation['isRead'],
-                        hasAttachment: conversation['hasAttachment'],
-                      );
-                    },
-                  ),
+            child: ListView.separated(
+              physics: const BouncingScrollPhysics(),
+              itemCount: conversations.length,
+              separatorBuilder: (context, index) {
+                return Container(
+                  margin: const EdgeInsets.only(left: kInsetDividerLeft),
+                  height: 1,
+                  color: kDivider,
+                );
+              },
+              itemBuilder: (context, index) {
+                final conversation = conversations[index];
+                return ChatListItem(
+                  name: conversation['name'],
+                  message: conversation['message'],
+                  time: conversation['time'],
+                  isOnline: conversation['isOnline'],
+                  unreadCount: conversation['unreadCount'],
+                  isRead: conversation['isRead'],
+                  hasAttachment: conversation['hasAttachment'],
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -224,58 +205,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    String message;
-    switch (selectedTabIndex) {
-      case 1: // Unread
-        message = 'No unread messages';
-        break;
-      case 2: // Groups
-        message = 'No group conversations';
-        break;
-      default:
-        message = 'No conversations yet';
-    }
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            selectedTabIndex == 1
-                ? Icons.mark_email_read_outlined
-                : selectedTabIndex == 2
-                    ? Icons.group_outlined
-                    : Icons.chat_bubble_outline,
-            size: 64,
-            color: kTextTertiary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: const TextStyle(
-              fontSize: 16,
-              color: kTextTertiary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            selectedTabIndex == 1
-                ? 'All caught up! 🎉'
-                : selectedTabIndex == 2
-                    ? 'Start a group conversation'
-                    : 'Start a new conversation',
-            style: const TextStyle(
-              fontSize: 14,
-              color: kTextTertiary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildBottomNavItem(IconData icon, String label) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -303,12 +232,10 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
 class _TabsBar extends StatelessWidget {
   final int selectedIndex;
-  final int unreadCount;
   final Function(int) onTabSelected;
 
   const _TabsBar({
     required this.selectedIndex,
-    required this.unreadCount,
     required this.onTabSelected,
   });
 
@@ -321,7 +248,7 @@ class _TabsBar extends StatelessWidget {
           _buildTab('All', 0, isSelected: selectedIndex == 0),
           const SizedBox(width: 12),
           _buildTab('Unread', 1,
-              unreadCount: unreadCount, isSelected: selectedIndex == 1),
+              unreadCount: 8, isSelected: selectedIndex == 1),
           const SizedBox(width: 12),
           _buildTab('Groups', 2, isSelected: selectedIndex == 2),
         ],
@@ -350,7 +277,7 @@ class _TabsBar extends StatelessWidget {
                 color: isSelected ? Colors.white : kTextPrimary,
               ),
             ),
-            if (unreadCount != null && unreadCount > 0) ...[
+            if (unreadCount != null) ...[
               const SizedBox(width: 8),
               Container(
                 width: 18,
